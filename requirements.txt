@@ -1,0 +1,6 @@
+pyverilog
+google-genai
+openai
+python-dotenv
+streamlit
+pandas
