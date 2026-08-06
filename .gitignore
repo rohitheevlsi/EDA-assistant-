@@ -48,3 +48,10 @@ reports/
 .idea/
 .DS_Store
 Thumbs.db
+
+# PLY / Pyverilog parser files
+parsetab.py
+
+# Raw clones repository directory
+data_generation/raw_repos/
+

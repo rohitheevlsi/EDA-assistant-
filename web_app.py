@@ -12,9 +12,8 @@ import pandas as pd
 import streamlit as st
 
 sys.path.insert(0, os.path.dirname(__file__))
-OSS_CAD_BIN = r"E:\oss-cad-suite\bin"
-if os.path.isdir(OSS_CAD_BIN):
-    os.environ["PATH"] = OSS_CAD_BIN + os.pathsep + os.environ.get("PATH", "")
+from src.toolchain import setup_toolchain_env
+os.environ.update(setup_toolchain_env())
 
 from eda_assistant import analyze
 
@@ -300,12 +299,14 @@ run_analysis = st.button("🚀 Run Analysis Pipeline", use_container_width=True)
 
 # Save or load files based on inputs
 fp = None
+is_temp = False
 if input_mode == "Select sample" and selected_sample:
     fp = os.path.join("tests", "verilog", selected_sample)
 elif input_mode == "Upload file" and uploaded_file:
     with tempfile.NamedTemporaryFile(suffix=".v", delete=False, mode="wb") as tmp:
         tmp.write(uploaded_file.getbuffer())
         fp = tmp.name
+        is_temp = True
 
 if not fp:
     st.markdown("""
@@ -332,6 +333,12 @@ if run_analysis or fp not in st.session_state['reports_cache']:
         except Exception as e:
             st.error(f"Pipeline Execution Failed: {e}")
             st.stop()
+        finally:
+            if is_temp and fp and os.path.exists(fp):
+                try:
+                    os.unlink(fp)
+                except Exception:
+                    pass
 else:
     report = st.session_state['reports_cache'][fp]
 
@@ -584,9 +591,10 @@ with t_quality:
     # Gemini explanation text box
     st.markdown('<div class="sec-label">RTL Architecture Explanation (Gemini)</div>', unsafe_allow_html=True)
     if report.llm_explanation and "(LLM skipped)" not in report.llm_explanation:
+        import html
         st.markdown(f"""
         <div style="background:#0b1410;border:1px solid #1a3025;border-radius:8px;padding:1.5rem;font-size:0.9rem;line-height:1.75;color:#c0d0c5;">
-          {report.llm_explanation}
+          {html.escape(report.llm_explanation)}
         </div>
         """, unsafe_allow_html=True)
     else:
@@ -603,9 +611,9 @@ with t_metrics:
         with col1:
             st.markdown(f"""
             <div class="quality-card">
-              <div class="label">Cyclomatic Complexity</div>
-              <div style="font-size:2.5rem;font-weight:700;color:#14b8a6;margin:10px 0;">{metrics.get('cyclomatic_complexity', 0)}</div>
-              <div style="font-size:0.75rem;color:#6d8c7c;">Number of independent linear execution paths through FSM and decisions.</div>
+              <div class="label">Approximated Cyclomatic Complexity</div>
+              <div style="font-size:2.5rem;font-weight:700;color:#14b8a6;margin:10px 0;">{metrics.get('approximated_cyclomatic_complexity', metrics.get('cyclomatic_complexity', 0))}</div>
+              <div style="font-size:0.75rem;color:#6d8c7c;">Approximated complexity (1 + if_count + case_branches). This is a structural heuristic, not the exact McCabe formula.</div>
             </div>
             """, unsafe_allow_html=True)
             
@@ -641,6 +649,7 @@ with t_metrics:
 # ── TAB 4: POWER & TIMING ──────────────────────────────────────────────────
 with t_power:
     st.markdown('<div class="sec-label">Power & Area Estimation (45nm Node)</div>', unsafe_allow_html=True)
+    st.warning("⚠️ **Disclaimer:** These power, area, and frequency values are rough structural heuristics estimated from technology-independent cell mappings, not actual sign-off Static Timing Analysis (STA) or power extraction.")
     
     pt = report.power_timing
     if pt and 'error' not in pt:

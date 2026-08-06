@@ -10,10 +10,8 @@ import sys
 # Add project root to path
 sys.path.insert(0, os.path.dirname(__file__))
 
-# Bootstrap OSS CAD Suite so iverilog/yosys/verilator are on PATH
-OSS_CAD_BIN = r"E:\oss-cad-suite\bin"
-if os.path.isdir(OSS_CAD_BIN):
-    os.environ["PATH"] = OSS_CAD_BIN + os.pathsep + os.environ.get("PATH", "")
+from src.toolchain import setup_toolchain_env
+os.environ.update(setup_toolchain_env())
 
 from src.parser_ir import parse_verilog, summarize_ast
 from src.linter import lint_ast, run_verilator_lint

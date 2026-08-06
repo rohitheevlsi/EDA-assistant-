@@ -2,7 +2,29 @@
 Power / Timing / Area Estimation Engine
 Uses Yosys synthesis output + structural IR to compute VLSI design estimates.
 All estimates are grounded in cell-count data from Yosys — no LLM speculation.
+
+If models/power_timing_model.pkl exists (produced by train_power_model.py),
+ML predictions are used instead of the hand-written heuristics.
 """
+
+import os as _os
+import math as _math
+
+_MODEL = None
+_MODEL_META = None
+_MODEL_PATH = _os.path.join(_os.path.dirname(__file__), '..', 'models', 'power_timing_model.pkl')
+_META_PATH  = _os.path.join(_os.path.dirname(__file__), '..', 'models', 'model_meta.json')
+
+try:
+    import joblib as _joblib
+    if _os.path.exists(_MODEL_PATH):
+        _MODEL = _joblib.load(_MODEL_PATH)
+        import json as _json
+        if _os.path.exists(_META_PATH):
+            with open(_META_PATH) as _f:
+                _MODEL_META = _json.load(_f)
+except Exception as _e:
+    _MODEL = None
 
 # Standard cell area/power lookup tables (approximate, technology-relative)
 # Values are normalized to a generic 45nm process node
@@ -61,6 +83,10 @@ def estimate_power_timing_area(synth_result, complexity_metrics=None):
     """
     Compute power, timing, and area estimates from Yosys synthesis results.
 
+    When models/power_timing_model.pkl is present (run train_power_model.py to
+    generate it), uses the trained ML model.  Falls back to hand-written 45nm
+    heuristics when the model file is absent.
+
     Args:
         synth_result: SynthesisResult from synthesis.py
         complexity_metrics: dict from complexity.py (optional)
@@ -76,7 +102,61 @@ def estimate_power_timing_area(synth_result, complexity_metrics=None):
             'max_freq_mhz': 0, 'cell_categories': {},
         }
 
+    # ── ML Prediction Path ────────────────────────────────────────────────────
+    if _MODEL is not None:
+        cx = complexity_metrics or {}
+        g  = synth_result.gates
+        total = synth_result.total_cells or 0
+        ff    = sum(n for c,n in g.items() if 'DFF' in c or 'DLATCH' in c or 'SDFF' in c)
+        mux   = sum(n for c,n in g.items() if 'MUX' in c)
+        buf   = sum(n for c,n in g.items() if 'BUF' in c or 'NOT' in c)
+        logic = total - ff - mux - buf
+
+        import pandas as _pd
+        feat = _pd.DataFrame([{
+            'total_cells':   total,
+            'ff_cells':      ff,
+            'logic_cells':   logic,
+            'mux_cells':     mux,
+            'buf_cells':     buf,
+            'wires':         synth_result.wires,
+            'wire_bits':     synth_result.wire_bits,
+            'memory_bits':   synth_result.memory_bits,
+            'register_bits': cx.get('register_bits', 0),
+            'clock_domains': cx.get('clock_domain_count', 0),
+            'approx_cc':     cx.get('approximated_cyclomatic_complexity', 1),
+            'nesting_depth': cx.get('max_nesting_depth', 0),
+            'port_count':    cx.get('port_count', 0),
+            'always_blocks': cx.get('always_blocks', 0),
+        }])
+        try:
+            pred = _MODEL.predict(feat)[0]   # [area, power, delay]
+            area_ml, power_ml, delay_ml = float(pred[0]), float(pred[1]), float(pred[2])
+            freq_ml = round(1e6 / max(delay_ml, 1), 1)
+            n_train = (_MODEL_META or {}).get('n_train', '?')
+            return {
+                'total_area_um2':   round(area_ml, 2),
+                'area_breakdown':   {},
+                'leakage_power_nw': 0,
+                'dynamic_power_uw': round(power_ml, 4),
+                'total_power_uw':   round(power_ml, 4),
+                'critical_path_ps': int(delay_ml),
+                'estimated_stages': max(1, int(_math.log2(max(total - ff, 2)))),
+                'max_freq_mhz':     freq_ml,
+                'cell_categories': {
+                    'Flip-Flops': ff, 'Logic Gates': logic,
+                    'MUX': mux, 'Buffers/Inverters': buf,
+                },
+                'total_cells':   total,
+                'combo_cells':   total - ff,
+                'sequential_cells': ff,
+                'disclaimer': f'ML-estimated (GradientBoosting model trained on {n_train} synthesized designs). Not sign-off STA.',
+            }
+        except Exception:
+            pass   # fall through to heuristics
+
     gates = synth_result.gates
+
 
     # ── Area Estimation ──
     total_area = 0.0
@@ -150,6 +230,7 @@ def estimate_power_timing_area(synth_result, complexity_metrics=None):
         'total_cells': total_cells,
         'combo_cells': combo_cells,
         'sequential_cells': ff_cells,
+        'disclaimer': 'These power, area, and frequency values are rough structural heuristics estimated from technology-independent cell mappings, not actual sign-off Static Timing Analysis (STA) or power extraction.',
     }
 
 
@@ -157,12 +238,13 @@ def format_power_timing_report(pt):
     if pt.get('error'):
         return f"  Error: {pt['error']}"
     lines = [
-        f"  Total Area: {pt['total_area_um2']} um² (45nm estimate)",
-        f"  Leakage Power: {pt['leakage_power_nw']} nW",
+        f"  Total Area: {pt['total_area_um2']} um² (Heuristic 45nm estimate)",
+        f"  Leakage Power: {pt['leakage_power_nw']} nW (Heuristic 45nm estimate)",
         f"  Dynamic Power: {pt['dynamic_power_uw']} uW (@100MHz, 10% toggle, 1.0V)",
-        f"  Total Power: {pt['total_power_uw']} uW",
-        f"  Critical Path: ~{pt['critical_path_ps']} ps ({pt['estimated_stages']} logic stages)",
-        f"  Max Frequency: ~{pt['max_freq_mhz']} MHz",
+        f"  Total Power: {pt['total_power_uw']} uW (Heuristic 45nm estimate)",
+        f"  Critical Path: ~{pt['critical_path_ps']} ps ({pt['estimated_stages']} logic stages, Heuristic)",
+        f"  Max Frequency: ~{pt['max_freq_mhz']} MHz (Heuristic)",
+        f"  NOTE: {pt.get('disclaimer')}",
         f"  Cell Categories:",
     ]
     for cat, count in pt.get('cell_categories', {}).items():

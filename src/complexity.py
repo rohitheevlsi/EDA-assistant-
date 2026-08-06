@@ -195,7 +195,8 @@ def compute_complexity(ast, ir_summary):
         'case_statements': n_case,
         'case_branches': case_branches,
         'max_nesting_depth': max_if_depth,
-        'cyclomatic_complexity': cyclomatic,
+        'approximated_cyclomatic_complexity': cyclomatic,
+        'cyclomatic_complexity': cyclomatic, # alias for backward compatibility
         'register_bits': register_bits,
         'memory_bits': memory_bits,
         'clock_domains': sorted(clock_domains),
@@ -224,7 +225,7 @@ def format_complexity_report(metrics):
         f"  Ports: {metrics['port_count']}   Signals: {metrics['signal_count']}   Always Blocks: {metrics['always_blocks']}",
         f"  If Statements: {metrics['if_statements']}   Case Statements: {metrics['case_statements']}   Branches: {metrics['case_branches']}",
         f"  Max Nesting Depth: {metrics['max_nesting_depth']}",
-        f"  Cyclomatic Complexity: {metrics['cyclomatic_complexity']}",
+        f"  Approximated Cyclomatic Complexity: {metrics['approximated_cyclomatic_complexity']} (approximation formula: 1 + if_count + case_branches)",
         f"  Register Bits: {metrics['register_bits']}   Memory Bits: {metrics['memory_bits']}",
         f"  Clock Domains: {', '.join(metrics['clock_domains']) or '(none)'}  ({metrics['clock_domain_count']})",
         f"  Complexity Score: {metrics['complexity_score']}/100 ({metrics['complexity_grade']})",

@@ -1,5 +1,7 @@
-import sys
+from src.toolchain import setup_toolchain_env
 import os
+os.environ.update(setup_toolchain_env())
+
 from pyverilog.vparser.parser import parse
 
 def parse_verilog(file_path):

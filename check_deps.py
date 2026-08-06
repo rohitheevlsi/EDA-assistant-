@@ -1,17 +1,19 @@
-import subprocess
 import sys
 import os
+from src.toolchain import run_tool, setup_toolchain_env
 
-# Add OSS CAD Suite to PATH if it exists locally
-oss_cad_root = r'E:\oss-cad-suite'
-if os.path.isdir(oss_cad_root):
-    os.environ['PATH'] = os.path.join(oss_cad_root, 'bin') + os.pathsep + os.path.join(oss_cad_root, 'lib') + os.pathsep + os.environ['PATH']
+# Apply toolchain environment
+os.environ.update(setup_toolchain_env())
 
-def check_command(cmd, name):
+def check_command(tool_name, args, name):
     try:
-        subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, check=True)
-        print(f"[PASS] {name} found.")
-        return True
+        result = run_tool(tool_name, args)
+        if result.returncode == 0 or result.stderr or result.stdout:
+            print(f"[PASS] {name} found.")
+            return True
+        else:
+            print(f"[FAIL] {name} check failed.")
+            return False
     except FileNotFoundError:
         print(f"[FAIL] {name} not found in PATH.")
         return False
@@ -33,8 +35,10 @@ def main():
     print("-" * 40)
     
     deps_ok = True
-    deps_ok &= check_command(['verilator_bin', '--version'], 'Verilator')
-    deps_ok &= check_command(['yosys', '-V'], 'Yosys')
+    deps_ok &= check_command('verilator_bin', ['--version'], 'Verilator')
+    deps_ok &= check_command('yosys', ['-V'], 'Yosys')
+    deps_ok &= check_command('iverilog', ['-V'], 'Icarus Verilog')
+    deps_ok &= check_command('vvp', ['-V'], 'VVP Simulator')
     deps_ok &= check_python_module('pyverilog')
     
     print("-" * 40)

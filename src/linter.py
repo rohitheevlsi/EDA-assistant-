@@ -284,9 +284,10 @@ def lint_ast(ast):
 
 
 def run_verilator_lint(filepath):
-    cmd = ['cmd.exe', '/c', f'set VERILATOR_ROOT=E:\\\\oss-cad-suite\\\\share\\\\verilator&& E:\\\\oss-cad-suite\\\\environment.bat && verilator_bin.exe --lint-only -Wall {filepath}']
+    from src.toolchain import run_tool
     try:
-        result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        # Use verilator_bin directly via run_tool
+        result = run_tool("verilator_bin", ["--lint-only", "-Wall", filepath])
         return result.stderr.strip() + "\n" + result.stdout.strip()
     except Exception as e:
         return f"Error running verilator: {e}"
@@ -300,8 +301,7 @@ def main():
     filepath = sys.argv[1]
     print(f"--- LINTING {os.path.basename(filepath)} ---")
     try:
-        oss_cad_bin = r'E:\oss-cad-suite\bin'
-        os.environ['PATH'] = oss_cad_bin + os.pathsep + os.environ.get('PATH', '')
+        from pyverilog.vparser.parser import parse
         ast, directives = parse([filepath])
         custom_warnings = lint_ast(ast)
         print("Custom Linter Results:")

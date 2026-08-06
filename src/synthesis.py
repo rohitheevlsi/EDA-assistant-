@@ -1,17 +1,16 @@
 """
-Synthesis Engine - Phase 5
-Shells out to Yosys and parses real gate-count/area statistics.
+Synthesis Engine - Phase 5 (Cross-Platform)
+Shells out to Yosys and parses real gate-count/area statistics, plus writes JSON netlist.
 CONSTRAINT: All numbers in this module come from Yosys output, never from the LLM.
 """
 
 import os
-import subprocess
 import re
 import tempfile
+import json
 from dataclasses import dataclass, field
 from typing import Optional
-
-YOSYS_BAT = r"E:\oss-cad-suite\environment.bat"
+from src.toolchain import run_tool
 
 
 @dataclass
@@ -28,6 +27,7 @@ class SynthesisResult:
     warnings: list = field(default_factory=list)
     raw_output: str = ""
     error: Optional[str] = None
+    netlist_json: Optional[dict] = None            # Parsed JSON netlist structure
 
 
 def _run_yosys(script: str) -> tuple[str, str, int]:
@@ -36,10 +36,10 @@ def _run_yosys(script: str) -> tuple[str, str, int]:
         f.write(script)
         script_path = f.name
 
-    cmd = ["cmd.exe", "/c", f"{YOSYS_BAT} && yosys {script_path}"]
     try:
-        result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
-        # Yosys writes all output to stdout when given a file argument
+        # Run directly using cross-platform toolchain utility (no -q: need stat output)
+        result = run_tool("yosys", [script_path])
+        # Yosys writes output to stdout when given a script file
         combined = result.stdout + result.stderr
         return combined, result.stderr, result.returncode
     except Exception as e:
@@ -55,14 +55,26 @@ def run_synthesis(filepath: str) -> SynthesisResult:
     """
     Run Yosys synthesis on a Verilog file and return real stats.
     Uses generic gate library (synth with no tech target) to get technology-independent counts.
+    Generates a structured netlist JSON file for schematic visualization.
     """
     # Escape backslashes for Yosys script
     fpath_escaped = filepath.replace("\\", "/")
 
+    # Create a temporary file to store the JSON netlist output
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".json", delete=False) as f:
+        json_path = f.name
+    try:
+        os.unlink(json_path) # Let Yosys create it
+    except Exception:
+        pass
+
+    json_path_escaped = json_path.replace("\\", "/")
+
     yosys_script = f"""
-read_verilog {fpath_escaped}
-synth -flatten
+read_verilog "{fpath_escaped}"
+synth -auto-top -flatten
 stat
+write_json "{json_path_escaped}"
 """
 
     stdout, stderr, rc = _run_yosys(yosys_script)
@@ -78,6 +90,19 @@ stat
     if rc != 0 and not stdout.strip():
         result.error = stderr.strip() or "Unknown Yosys error"
         return result
+
+    # Read and parse JSON netlist if generated successfully
+    if os.path.exists(json_path):
+        try:
+            with open(json_path, "r", encoding="utf-8") as jf:
+                result.netlist_json = json.load(jf)
+        except Exception as je:
+            result.warnings.append(f"Failed to parse Yosys JSON netlist: {je}")
+        finally:
+            try:
+                os.unlink(json_path)
+            except Exception:
+                pass
 
     # Parse classic Yosys stat text output
     # Find the LAST stat block (after synth)

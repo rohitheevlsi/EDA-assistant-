@@ -157,6 +157,7 @@ def run_iverilog_check(tb_code: str, module_verilog: str, module_name: str) -> t
     Compile the testbench + module with iverilog and run the simulation using vvp.
     Returns (success, compile_output, simulation_output).
     """
+    from src.toolchain import run_tool
     with tempfile.TemporaryDirectory() as tmpdir:
         tb_path = os.path.join(tmpdir, f"tb_{module_name}.v")
         mod_path = os.path.join(tmpdir, f"{module_name}.v")
@@ -167,9 +168,7 @@ def run_iverilog_check(tb_code: str, module_verilog: str, module_name: str) -> t
         with open(mod_path, "w") as f:
             f.write(module_verilog)
 
-        cmd = ["cmd.exe", "/c",
-               f"E:\\oss-cad-suite\\environment.bat && iverilog -o {out_path} {tb_path} {mod_path}"]
-        result = subprocess.run(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        result = run_tool("iverilog", ["-o", out_path, tb_path, mod_path])
         success = result.returncode == 0
         compile_output = (result.stdout + result.stderr).strip()
 
@@ -177,9 +176,7 @@ def run_iverilog_check(tb_code: str, module_verilog: str, module_name: str) -> t
             return False, compile_output, ""
 
         # Run simulation
-        cmd_sim = ["cmd.exe", "/c",
-                   f"E:\\oss-cad-suite\\environment.bat && vvp {out_path}"]
-        result_sim = subprocess.run(cmd_sim, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        result_sim = run_tool("vvp", [out_path])
         simulation_output = (result_sim.stdout + result_sim.stderr).strip()
 
         return True, compile_output, simulation_output
@@ -189,8 +186,6 @@ if __name__ == "__main__":
     import sys
     sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
     from src.parser_ir import parse_verilog, summarize_ast
-
-    os.environ["PATH"] = r"E:\oss-cad-suite\bin" + os.pathsep + os.environ.get("PATH", "")
 
     fp = sys.argv[1] if len(sys.argv) > 1 else "tests/verilog/adder.v"
     ast = parse_verilog(fp)
