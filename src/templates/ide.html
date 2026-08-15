@@ -4,13 +4,18 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>EDA Assistant · Unified RTL Intelligence Platform</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+
+<!-- Non-blocking font loading with system font fallback -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 body {
   background: #060a08;
   color: #c0d0c5;
-  font-family: 'Inter', sans-serif;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
   height: 100vh;
   display: flex;
   flex-direction: column;
@@ -37,7 +42,7 @@ body {
 }
 #header .title-box { display: flex; flex-direction: column; }
 #header h1 { font-size: 0.95rem; font-weight: 700; color: #eaf3ee; letter-spacing: -0.3px; }
-#header .sub { font-size: 0.65rem; color: #4d7c66; font-family: 'JetBrains Mono', monospace; text-transform: uppercase; letter-spacing: 0.05em; }
+#header .sub { font-size: 0.65rem; color: #4d7c66; font-family: 'JetBrains Mono', Consolas, monospace; text-transform: uppercase; letter-spacing: 0.05em; }
 
 /* Top controls */
 .top-controls { display: flex; align-items: center; gap: 10px; margin-left: auto; }
@@ -45,7 +50,7 @@ select.styled-select, button.styled-btn {
   background: #111e17;
   border: 1px solid #1a3025;
   color: #c0d0c5;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'JetBrains Mono', Consolas, monospace;
   font-size: 0.72rem;
   padding: 5px 10px;
   border-radius: 5px;
@@ -66,7 +71,7 @@ button.btn-accent:hover { background: #0d9488; }
   border-bottom: 1px solid #14241c;
   padding: 4px 16px;
   font-size: 0.7rem;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'JetBrains Mono', Consolas, monospace;
   color: #4d7c66;
   display: flex;
   align-items: center;
@@ -92,7 +97,7 @@ button.btn-accent:hover { background: #0d9488; }
   justify-content: space-between;
   font-size: 0.72rem;
   color: #4d7c66;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'JetBrains Mono', Consolas, monospace;
   flex-shrink: 0;
   height: 36px;
 }
@@ -120,7 +125,7 @@ button.btn-accent:hover { background: #0d9488; }
   position: relative;
 }
 .kpi-card::after { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: #14b8a6; opacity: 0.6; }
-.kpi-val { font-size: 1.1rem; font-weight: 700; color: #14b8a6; font-family: 'JetBrains Mono', monospace; line-height: 1.1; }
+.kpi-val { font-size: 1.1rem; font-weight: 700; color: #14b8a6; font-family: 'JetBrains Mono', Consolas, monospace; line-height: 1.1; }
 .kpi-lbl { font-size: 0.6rem; color: #4d7c66; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 3px; }
 
 /* Navigation Tabs */
@@ -139,7 +144,7 @@ button.btn-accent:hover { background: #0d9488; }
   border-bottom: 2px solid transparent;
   color: #4d7c66;
   padding: 8px 12px;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'JetBrains Mono', Consolas, monospace;
   font-size: 0.72rem;
   cursor: pointer;
   white-space: nowrap;
@@ -178,7 +183,7 @@ button.btn-accent:hover { background: #0d9488; }
 .lint-item {
   display: flex; align-items: flex-start; gap: 8px;
   padding: 7px 10px; border-radius: 5px; margin-bottom: 5px;
-  font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; line-height: 1.4;
+  font-family: 'JetBrains Mono', Consolas, monospace; font-size: 0.75rem; line-height: 1.4;
 }
 .lint-item.warn  { background: #1a150c; border: 1px solid #3d2d10; color: #f59e0b; }
 .lint-item.error { background: #1e0e0e; border: 1px solid #4a1818; color: #f87171; }
@@ -195,12 +200,12 @@ button.btn-accent:hover { background: #0d9488; }
 .prog-fill { height: 100%; background: linear-gradient(90deg, #10b981, #14b8a6); border-radius: 3px; }
 
 /* Tables */
-table.data-table { width: 100%; border-collapse: collapse; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; }
+table.data-table { width: 100%; border-collapse: collapse; font-family: 'JetBrains Mono', Consolas, monospace; font-size: 0.75rem; }
 table.data-table th, table.data-table td { padding: 6px 10px; text-align: left; border-bottom: 1px solid #1a3025; }
 table.data-table th { color: #4d7c66; font-size: 0.65rem; text-transform: uppercase; background: #080f0b; }
 
 /* Code box */
-pre.code-block { background: #070c0a; border: 1px solid #1a3025; border-radius: 6px; padding: 12px; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: #8fd4b2; white-space: pre-wrap; overflow-x: auto; }
+pre.code-block { background: #070c0a; border: 1px solid #1a3025; border-radius: 6px; padding: 12px; font-family: 'JetBrains Mono', Consolas, monospace; font-size: 0.75rem; color: #8fd4b2; white-space: pre-wrap; overflow-x: auto; }
 
 /* Scrollbars */
 ::-webkit-scrollbar { width: 5px; height: 5px; }
@@ -247,7 +252,7 @@ pre.code-block { background: #070c0a; border: 1px solid #1a3025; border-radius: 
       <span style="color:#4d7c66;font-size:0.65rem">Auto-Analysis Debounced</span>
     </div>
     <div id="monaco-container">
-      <textarea id="code-textarea" style="width:100%;height:100%;background:#070c0a;color:#8fd4b2;border:none;padding:12px;font-family:'JetBrains Mono',monospace;font-size:13px;outline:none;resize:none;" oninput="onCodeInput()"></textarea>
+      <textarea id="code-textarea" style="width:100%;height:100%;background:#070c0a;color:#8fd4b2;border:none;padding:12px;font-family:'JetBrains Mono',Consolas,monospace;font-size:13px;outline:none;resize:none;" oninput="onCodeInput()"></textarea>
     </div>
   </div>
 
@@ -322,7 +327,7 @@ pre.code-block { background: #070c0a; border: 1px solid #1a3025; border-radius: 
           <div style="display:flex;align-items:center;justify-content:space-between">
             <div>
               <div style="font-size:0.75rem;color:#8ea499">RandomForest Anomaly Score</div>
-              <div id="bug-prob-val" style="font-size:1.8rem;font-weight:700;color:#14b8a6;font-family:'JetBrains Mono',monospace">0.0%</div>
+              <div id="bug-prob-val" style="font-size:1.8rem;font-weight:700;color:#14b8a6;font-family:'JetBrains Mono',Consolas,monospace">0.0%</div>
             </div>
             <div id="bug-prob-badge" style="background:#09241b;border:1px solid #14b8a6;color:#14b8a6;padding:4px 12px;border-radius:20px;font-size:0.72rem;font-weight:700;">
               LOW RISK
@@ -346,7 +351,7 @@ pre.code-block { background: #070c0a; border: 1px solid #1a3025; border-radius: 
         <div class="card-section" style="display:flex;gap:20px;align-items:center">
           <div style="text-align:center;background:#081510;border:1px solid #1a3025;padding:16px;border-radius:8px;min-width:110px">
             <div style="font-size:0.65rem;color:#4d7c66">LETTER GRADE</div>
-            <div id="q-grade-badge" style="font-size:3rem;font-weight:800;color:#14b8a6;font-family:'JetBrains Mono',monospace">A+</div>
+            <div id="q-grade-badge" style="font-size:3rem;font-weight:800;color:#14b8a6;font-family:'JetBrains Mono',Consolas,monospace">A+</div>
             <div id="q-total-score" style="font-size:0.85rem;color:#eaf3ee;font-weight:600">100 / 100</div>
           </div>
           <div style="flex:1" id="q-breakdown-box">
@@ -372,22 +377,22 @@ pre.code-block { background: #070c0a; border: 1px solid #1a3025; border-radius: 
         <div class="card-section" style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px">
           <div>
             <div style="font-size:0.68rem;color:#4d7c66;text-transform:uppercase">Estimated Silicon Area</div>
-            <div id="ppa-area" style="font-size:1.6rem;font-weight:700;color:#eab308;font-family:'JetBrains Mono',monospace">0.0 μm²</div>
+            <div id="ppa-area" style="font-size:1.6rem;font-weight:700;color:#eab308;font-family:'JetBrains Mono',Consolas,monospace">0.0 μm²</div>
             <div style="font-size:0.68rem;color:#6d8c7c;margin-top:4px">Standard cell active gate footprint</div>
           </div>
           <div>
             <div style="font-size:0.68rem;color:#4d7c66;text-transform:uppercase">Total Power @100MHz</div>
-            <div id="ppa-power" style="font-size:1.6rem;font-weight:700;color:#14b8a6;font-family:'JetBrains Mono',monospace">0.0 μW</div>
+            <div id="ppa-power" style="font-size:1.6rem;font-weight:700;color:#14b8a6;font-family:'JetBrains Mono',Consolas,monospace">0.0 μW</div>
             <div id="ppa-power-sub" style="font-size:0.68rem;color:#6d8c7c;margin-top:4px">Leakage: 0 nW · Dynamic: 0 μW</div>
           </div>
           <div>
             <div style="font-size:0.68rem;color:#4d7c66;text-transform:uppercase">Critical Path Delay</div>
-            <div id="ppa-path" style="font-size:1.6rem;font-weight:700;color:#3b82f6;font-family:'JetBrains Mono',monospace">0 ps</div>
+            <div id="ppa-path" style="font-size:1.6rem;font-weight:700;color:#3b82f6;font-family:'JetBrains Mono',Consolas,monospace">0 ps</div>
             <div id="ppa-stages" style="font-size:0.68rem;color:#6d8c7c;margin-top:4px">0 logic stages</div>
           </div>
           <div>
             <div style="font-size:0.68rem;color:#4d7c66;text-transform:uppercase">Maximum Clock Frequency</div>
-            <div id="ppa-fmax" style="font-size:1.6rem;font-weight:700;color:#ef4444;font-family:'JetBrains Mono',monospace">0 MHz</div>
+            <div id="ppa-fmax" style="font-size:1.6rem;font-weight:700;color:#ef4444;font-family:'JetBrains Mono',Consolas,monospace">0 MHz</div>
             <div style="font-size:0.68rem;color:#6d8c7c;margin-top:4px">45nm CMOS cell library estimate</div>
           </div>
         </div>
@@ -398,12 +403,12 @@ pre.code-block { background: #070c0a; border: 1px solid #1a3025; border-radius: 
         <div class="card-section" style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px">
           <div>
             <div style="font-size:0.68rem;color:#4d7c66">McCabe Cyclomatic Complexity</div>
-            <div id="cx-cc" style="font-size:2rem;font-weight:700;color:#14b8a6;font-family:'JetBrains Mono',monospace">0</div>
+            <div id="cx-cc" style="font-size:2rem;font-weight:700;color:#14b8a6;font-family:'JetBrains Mono',Consolas,monospace">0</div>
             <div style="font-size:0.68rem;color:#6d8c7c;margin-top:4px">1 + if_statements + case_branches</div>
           </div>
           <div>
             <div style="font-size:0.68rem;color:#4d7c66">Register Storage Allocation</div>
-            <div id="cx-regs" style="font-size:2rem;font-weight:700;color:#3b82f6;font-family:'JetBrains Mono',monospace">0 bits</div>
+            <div id="cx-regs" style="font-size:2rem;font-weight:700;color:#3b82f6;font-family:'JetBrains Mono',Consolas,monospace">0 bits</div>
             <div style="font-size:0.68rem;color:#6d8c7c;margin-top:4px">Total Flip-Flop/Register capacity</div>
           </div>
         </div>
@@ -474,8 +479,6 @@ pre.code-block { background: #070c0a; border: 1px solid #1a3025; border-radius: 
   </div>
 </div>
 
-<!-- Monaco Editor Loader -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/loader.min.js"></script>
 <script>
 const API_BASE = window.location.origin;
 let editor = null;
@@ -539,7 +542,7 @@ module alu_8bit (
 
 endmodule`;
 
-// Set initial value in fallback textarea
+// Initialize code text immediately
 document.getElementById('code-textarea').value = DEFAULT_CODE;
 
 function getCode() {
@@ -561,42 +564,50 @@ function onCodeInput() {
   debounceTimer = setTimeout(runAnalysis, 1200);
 }
 
-// Initialize Monaco Editor if available
-if (window.require) {
-  try {
-    require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs' } });
-    require(['vs/editor/editor.main'], function() {
-      const container = document.getElementById('monaco-container');
-      const ta = document.getElementById('code-textarea');
-      const initCode = ta ? ta.value : DEFAULT_CODE;
-      if (ta) ta.style.display = 'none';
+// Asynchronously load Monaco Editor without blocking page render
+function loadMonacoAsync() {
+  const script = document.createElement('script');
+  script.src = 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/loader.min.js';
+  script.async = true;
+  script.onload = () => {
+    try {
+      require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs' } });
+      require(['vs/editor/editor.main'], function() {
+        const container = document.getElementById('monaco-container');
+        const ta = document.getElementById('code-textarea');
+        const initCode = ta ? ta.value : DEFAULT_CODE;
+        if (ta) ta.style.display = 'none';
 
-      editor = monaco.editor.create(container, {
-        value: initCode,
-        language: 'systemverilog',
-        theme: 'vs-dark',
-        automaticLayout: true,
-        fontSize: 13,
-        fontFamily: "'JetBrains Mono', monospace",
-        minimap: { enabled: false }
-      });
+        editor = monaco.editor.create(container, {
+          value: initCode,
+          language: 'systemverilog',
+          theme: 'vs-dark',
+          automaticLayout: true,
+          fontSize: 13,
+          fontFamily: "'JetBrains Mono', Consolas, monospace",
+          minimap: { enabled: false }
+        });
 
-      editor.onDidChangeModelContent(() => {
-        setStatus('active', 'Editing…');
-        clearTimeout(debounceTimer);
-        debounceTimer = setTimeout(runAnalysis, 1200);
+        editor.onDidChangeModelContent(() => {
+          setStatus('active', 'Editing…');
+          clearTimeout(debounceTimer);
+          debounceTimer = setTimeout(runAnalysis, 1200);
+        });
       });
-    });
-  } catch(e) {
-    console.log("Monaco load fallback:", e);
-  }
+    } catch(e) {
+      console.warn("Monaco init skipped, using built-in editor:", e);
+    }
+  };
+  script.onerror = () => {
+    console.warn("Monaco CDN unavailable, using built-in editor");
+  };
+  document.head.appendChild(script);
 }
 
-// Global initialization
-window.addEventListener('DOMContentLoaded', () => {
-  fetchSamplesList();
-  runAnalysis();
-});
+// Run immediately on page load
+fetchSamplesList();
+runAnalysis();
+loadMonacoAsync();
 
 // Switch Dashboard Tabs
 function switchTab(tabId) {
@@ -692,10 +703,8 @@ async function runAnalysis() {
 
 // Update UI Dashboard Components
 function updateUI(d) {
-  // Update status bar & header
   document.getElementById('module-info').textContent = `Module: ${d.module_name || 'unknown'}`;
 
-  // Update Top KPIs
   const qs = d.quality_score || {};
   document.getElementById('k-grade').textContent = qs.grade || '—';
   document.getElementById('k-lint').textContent = (d.lint_warnings || []).length;
@@ -708,11 +717,9 @@ function updateUI(d) {
   document.getElementById('k-power').textContent = pt.total_power_uw ? `${pt.total_power_uw} μW` : '—';
   document.getElementById('k-area').textContent = pt.total_area_um2 ? `${pt.total_area_um2} μm²` : '—';
 
-  // Render Gate Chart & Table
   renderGateChart(synth.gates || {});
   renderGateTable(synth.gates || {});
 
-  // Render ML Bug Classifier & Linting
   const bugProb = d.bug_probability !== null ? d.bug_probability : 0;
   document.getElementById('bug-prob-val').textContent = `${bugProb}%`;
   const bugBadge = document.getElementById('bug-prob-badge');
@@ -730,7 +737,6 @@ function updateUI(d) {
   renderLintItems(d.lint_warnings || []);
   document.getElementById('verilator-out-box').textContent = d.verilator_warnings || 'Verilator clean.';
 
-  // Render RTL Quality Scorecard
   document.getElementById('q-grade-badge').textContent = qs.grade || 'F';
   document.getElementById('q-total-score').textContent = `${qs.total_score || 0} / 100`;
 
@@ -762,7 +768,6 @@ function updateUI(d) {
 
   document.getElementById('llm-box').textContent = d.llm_explanation || '(LLM analysis skipped)';
 
-  // Render 45nm PPA Power/Timing
   document.getElementById('ppa-area').textContent = `${pt.total_area_um2 || 0} μm²`;
   document.getElementById('ppa-power').textContent = `${pt.total_power_uw || 0} μW`;
   document.getElementById('ppa-power-sub').textContent = `Leakage: ${pt.leakage_power_nw || 0} nW · Dynamic: ${pt.dynamic_power_uw || 0} μW`;
@@ -770,7 +775,6 @@ function updateUI(d) {
   document.getElementById('ppa-stages').textContent = `${pt.estimated_stages || 0} logic stages`;
   document.getElementById('ppa-fmax').textContent = `${pt.max_freq_mhz || 0} MHz`;
 
-  // Render Complexity
   const cx = d.complexity_metrics || {};
   document.getElementById('cx-cc').textContent = cx.approximated_cyclomatic_complexity || cx.cyclomatic_complexity || 0;
   document.getElementById('cx-regs').textContent = `${cx.register_bits || 0} bits`;
@@ -786,7 +790,6 @@ function updateUI(d) {
   ];
   cxTable.innerHTML = cxItems.map(([k,v]) => `<tr><td>${k}</td><td>${v}</td></tr>`).join('');
 
-  // Render Testbench
   const tbBadge = document.getElementById('tb-status-badge');
   if (d.testbench_compiles) {
     tbBadge.className = 'lint-item ok'; tbBadge.innerHTML = '<span class="badge">COMPILED</span>Testbench compiled successfully with iverilog';
@@ -796,7 +799,6 @@ function updateUI(d) {
   document.getElementById('tb-code-box').textContent = d.testbench_enhanced || '// Testbench skipped';
   document.getElementById('tb-sim-box').textContent = d.testbench_simulation_output || '// No simulation output';
 
-  // Render Report Text
   document.getElementById('report-text-box').textContent = d.report_text || '';
 }
 
@@ -826,9 +828,9 @@ function renderGateChart(gates) {
     const color = COLORS[name] || '#4d7c66';
     const shortName = name.replace(/^\$_/,'').replace(/_$/,'');
     return `
-      <text x="${PL-8}" y="${y+13}" fill="#8ea499" font-size="11" text-anchor="end" font-family="JetBrains Mono,monospace">${shortName}</text>
+      <text x="${PL-8}" y="${y+13}" fill="#8ea499" font-size="11" text-anchor="end" font-family="JetBrains Mono,Consolas,monospace">${shortName}</text>
       <rect x="${PL}" y="${y}" width="${bw}" height="${BAR_H}" fill="${color}" rx="3" opacity="0.9"/>
-      <text x="${PL+bw+6}" y="${y+13}" fill="#c0d0c5" font-size="11" font-family="JetBrains Mono,monospace">${count}</text>`;
+      <text x="${PL+bw+6}" y="${y+13}" fill="#c0d0c5" font-size="11" font-family="JetBrains Mono,Consolas,monospace">${count}</text>`;
   }).join('');
 
   container.innerHTML = `
