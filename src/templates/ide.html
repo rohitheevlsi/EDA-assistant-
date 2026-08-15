@@ -230,10 +230,10 @@ pre.code-block { background: #070c0a; border: 1px solid #1a3025; border-radius: 
     <label for="file-upload" class="styled-btn" style="display:inline-block;">📁 Upload .v</label>
     <input type="file" id="file-upload" accept=".v,.sv" style="display:none" onchange="handleFileUpload(event)"/>
 
-    <label class="toggle-label"><input type="checkbox" id="toggle-llm" checked/> 🧠 Gemini</label>
+    <label class="toggle-label"><input type="checkbox" id="toggle-llm"/> 🧠 Gemini</label>
     <label class="toggle-label"><input type="checkbox" id="toggle-tb" checked/> 🧪 Testbench</label>
 
-    <button class="styled-btn btn-accent" onclick="runNow()">🚀 Run Analysis</button>
+    <button id="run-btn" class="styled-btn btn-accent" onclick="runNow()">🚀 Run Analysis</button>
   </div>
 </div>
 
@@ -675,6 +675,10 @@ function runNow() { clearTimeout(debounceTimer); runAnalysis(); }
 async function runAnalysis() {
   const code = getCode();
   if (!code || !code.trim()) return;
+
+  const btn = document.getElementById('run-btn');
+  if (btn) { btn.textContent = '⏳ Analyzing...'; btn.disabled = true; }
+
   setStatus('active', 'Analyzing through VLSI pipeline…');
 
   const useLLM = document.getElementById('toggle-llm').checked;
@@ -690,14 +694,16 @@ async function runAnalysis() {
     currentReport = data;
 
     if (data.error) {
-      setStatus('error', 'Analysis pipeline error');
-      return;
+      setStatus('error', 'Syntax or verilog parse error');
+      document.getElementById('verilator-out-box').textContent = data.error;
+    } else {
+      updateUI(data);
+      setStatus('idle', `Analysis complete · ${new Date().toLocaleTimeString()}`);
     }
-
-    updateUI(data);
-    setStatus('idle', `Analysis complete · ${new Date().toLocaleTimeString()}`);
   } catch(e) {
     setStatus('error', `Network Error: ${e.message}`);
+  } finally {
+    if (btn) { btn.textContent = '🚀 Run Analysis'; btn.disabled = false; }
   }
 }
 

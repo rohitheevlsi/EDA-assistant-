@@ -1,27 +1,29 @@
 """
-EDA Assistant — Unified Web Platform API Server
-Serves the full single-page Verilog IDE & RTL Intelligence Dashboard.
-Runs full linting, Yosys synthesis, PPA estimation, quality scoring, testbench generation, simulation, ML bug prediction, and design comparison.
-
-Run: uvicorn api_server:app --port 8000 --reload
+FastAPI Server for EDA Assistant.
+Consolidates all backend services: AST parsing, Verilator/Custom Linting,
+Yosys Synthesis, PPA Estimation, ML Bug Probability, Testbench Generation, and Comparison.
 """
 
 import os
 import sys
-import json
 import tempfile
 import traceback
-import pickle
 from pathlib import Path
-from typing import Optional
+from typing import Optional, List, Dict, Any
 
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import HTMLResponse, JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import HTMLResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
+from starlette.concurrency import run_in_threadpool
 
-sys.path.insert(0, os.path.dirname(__file__))
+# Ensure project root is in sys.path
+PROJECT_ROOT = Path(__file__).resolve().parent
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 
+# Setup toolchain binaries (Yosys, Iverilog, Verilator)
 from src.toolchain import setup_toolchain_env
 os.environ.update(setup_toolchain_env())
 
@@ -30,49 +32,57 @@ from data_generation.train_bug_classifier import extract_ml_features
 
 app = FastAPI(title="EDA Assistant — Unified RTL Intelligence Platform", version="2.0.0")
 
+# Enable CORS
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
+    allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-TEMPLATE_PATH = Path(__file__).parent / "src" / "templates" / "ide.html"
-SAMPLES_DIR = Path(__file__).parent / "tests" / "verilog"
+# Static templates directory
+TEMPLATES_DIR = PROJECT_ROOT / "src" / "templates"
+SAMPLES_DIR = PROJECT_ROOT / "tests" / "verilog"
 
-# Load ML Bug Classifier if available
-MODEL_PATH = Path(__file__).parent / "models" / "bug_classifier.pkl"
+# Attempt to load ML Bug Classifier model
+MODEL_PATH = PROJECT_ROOT / "models" / "bug_classifier.pkl"
 bug_model = None
 if MODEL_PATH.exists():
     try:
-        with open(MODEL_PATH, "rb") as f:
-            bug_model = pickle.load(f)
-    except Exception as e:
-        print(f"[Warning] Failed to load bug_classifier.pkl: {e}")
+        import joblib
+        bug_model = joblib.load(MODEL_PATH)
+        print("[Info] ML Bug Classifier model loaded successfully.")
+    except Exception as err:
+        print(f"[Warning] Failed to load ML Bug Classifier model: {err}")
 
 
 class VerilogPayload(BaseModel):
     code: str
-    use_llm: bool = True
-    use_synth: bool = True
-    use_tb: bool = True
-
-
-class ComparePayload(BaseModel):
-    base_code: str
-    target_code: str
     use_llm: bool = False
     use_synth: bool = True
     use_tb: bool = True
 
 
+class ComparisonPayload(BaseModel):
+    base_code: str
+    target_code: str
+
+
+@app.get("/health")
+async def health_check():
+    """Health check endpoint."""
+    return {"status": "ok", "bug_model_loaded": bug_model is not None}
+
+
 @app.get("/", response_class=HTMLResponse)
 @app.get("/ide", response_class=HTMLResponse)
-async def serve_ide():
-    """Serve the Unified EDA Assistant IDE & Dashboard web application."""
-    if not TEMPLATE_PATH.exists():
-        raise HTTPException(status_code=404, detail="IDE template not found.")
-    return TEMPLATE_PATH.read_text(encoding="utf-8")
+async def get_ide_page():
+    """Serve the unified Single Page Application interface."""
+    ide_html_path = TEMPLATES_DIR / "ide.html"
+    if not ide_html_path.exists():
+        raise HTTPException(status_code=404, detail="IDE template missing.")
+    return HTMLResponse(content=ide_html_path.read_text(encoding="utf-8"))
 
 
 @app.get("/samples")
@@ -105,7 +115,10 @@ def _compute_bug_prob(report) -> Optional[float]:
         try:
             ast, _ = parse([tmp_path])
         finally:
-            os.unlink(tmp_path)
+            try:
+                os.unlink(tmp_path)
+            except Exception:
+                pass
 
         feat = extract_ml_features(ast, report.synthesis, report.complexity_metrics)
         import pandas as pd
@@ -121,7 +134,7 @@ def _compute_bug_prob(report) -> Optional[float]:
 async def analyze_verilog(payload: VerilogPayload):
     """
     Comprehensive EDA analysis endpoint.
-    Runs lint, complexity, synthesis, PPA estimation, quality score, testbench, and ML bug classifier.
+    Runs lint, complexity, synthesis, PPA estimation, quality score, testbench, and ML bug classifier in worker thread pool.
     """
     code = payload.code.strip()
     if not code:
@@ -132,7 +145,9 @@ async def analyze_verilog(payload: VerilogPayload):
         tmp_path = tmp.name
 
     try:
-        report = run_eda_analysis(
+        # Run blocking EDA pipeline in worker threadpool so event loop is never blocked
+        report = await run_in_threadpool(
+            run_eda_analysis,
             tmp_path,
             use_llm=payload.use_llm,
             use_synth=payload.use_synth,
@@ -140,10 +155,11 @@ async def analyze_verilog(payload: VerilogPayload):
         )
         res = report.to_dict()
         res["report_text"] = report.to_text()
-        res["bug_probability"] = _compute_bug_prob(report)
+        res["bug_probability"] = await run_in_threadpool(_compute_bug_prob, report)
         res["error"] = None
         return JSONResponse(content=res)
     except Exception as exc:
+        print(f"[Error] Pipeline failure: {exc}")
         return JSONResponse(
             status_code=200,
             content={"error": traceback.format_exc(), "module_name": "unknown"},
@@ -156,37 +172,30 @@ async def analyze_verilog(payload: VerilogPayload):
 
 
 @app.post("/compare")
-async def compare_verilog(payload: ComparePayload):
-    """
-    Side-by-side design comparison endpoint.
-    Calculates delta metrics between baseline and target designs.
-    """
-    if not payload.base_code.strip() or not payload.target_code.strip():
-        raise HTTPException(status_code=400, detail="Both baseline and target Verilog code required.")
+async def compare_designs(payload: ComparisonPayload):
+    """Compare two Verilog modules side by side."""
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".v", delete=False, encoding="utf-8") as tmp1:
+        tmp1.write(payload.base_code)
+        base_path = tmp1.name
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".v", delete=False, encoding="utf-8") as tmp2:
+        tmp2.write(payload.target_code)
+        target_path = tmp2.name
 
-    def run_one(code_str):
-        with tempfile.NamedTemporaryFile(mode="w", suffix=".v", delete=False, encoding="utf-8") as tmp:
-            tmp.write(code_str)
-            p = tmp.name
-        try:
-            rep = run_eda_analysis(p, use_llm=False, use_synth=True, use_tb=False)
-            d = rep.to_dict()
-            d["bug_probability"] = _compute_bug_prob(rep)
-            return d
-        finally:
+    try:
+        base_rep = await run_in_threadpool(run_eda_analysis, base_path, False, True, False)
+        target_rep = await run_in_threadpool(run_eda_analysis, target_path, False, True, False)
+        return {
+            "base": base_rep.to_dict(),
+            "target": target_rep.to_dict()
+        }
+    finally:
+        for p in [base_path, target_path]:
             try:
                 os.unlink(p)
             except Exception:
                 pass
 
-    try:
-        base_res = run_one(payload.base_code)
-        target_res = run_one(payload.target_code)
-        return JSONResponse(content={"base": base_res, "target": target_res})
-    except Exception as exc:
-        return JSONResponse(status_code=500, content={"error": str(exc)})
 
-
-@app.get("/health")
-async def health():
-    return {"status": "ok", "bug_model_loaded": bug_model is not None}
+if __name__ == "__main__":
+    import uvicorn
+    uvicorn.run("api_server:app", host="0.0.0.0", port=8000, reload=True)
