@@ -287,7 +287,7 @@ def run_verilator_lint(filepath):
     from src.toolchain import run_tool
     try:
         # Use verilator_bin directly via run_tool
-        result = run_tool("verilator_bin", ["--lint-only", "-Wall", filepath])
+        result = run_tool("verilator_bin", ["--lint-only", "-Wall", "-Wno-fatal", "-Wno-DECLFILENAME", "-Wno-EOFNEWLINE", filepath])
         return result.stderr.strip() + "\n" + result.stdout.strip()
     except Exception as e:
         return f"Error running verilator: {e}"
