@@ -1,484 +1,509 @@
 <!DOCTYPE html>
-<html lang="en">
+<html class="dark" lang="en">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>EDA Assistant · Unified RTL Intelligence Platform</title>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>FluxCore EDA - Hardware Assistant</title>
 
-<!-- Non-blocking font loading with system font fallback -->
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet" media="print" onload="this.media='all'">
+<!-- Tailwind CSS CDN & Fonts -->
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
 
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    "colors": {
+                        "primary-fixed": "#ffdcc2",
+                        "tertiary-fixed": "#dae3f2",
+                        "on-tertiary-fixed-variant": "#3e4753",
+                        "tertiary": "#bec7d6",
+                        "inverse-primary": "#8c4f10",
+                        "outline-variant": "#524439",
+                        "error": "#ffb4ab",
+                        "on-primary-fixed-variant": "#6d3a00",
+                        "on-primary-fixed": "#2e1500",
+                        "on-secondary-container": "#006c71",
+                        "secondary-fixed": "#63f7ff",
+                        "surface-container": "#1f1f24",
+                        "on-background": "#e3e2e8",
+                        "background": "#121317",
+                        "on-secondary-fixed-variant": "#004f53",
+                        "surface-tint": "#ffb77b",
+                        "tertiary-fixed-dim": "#bec7d6",
+                        "surface-container-high": "#292a2e",
+                        "on-primary-container": "#432100",
+                        "surface-container-highest": "#343439",
+                        "secondary-container": "#00f4fe",
+                        "on-primary": "#4d2700",
+                        "inverse-surface": "#e3e2e8",
+                        "primary-fixed-dim": "#ffb77b",
+                        "on-surface-variant": "#d8c3b4",
+                        "on-error-container": "#ffdad6",
+                        "on-tertiary": "#28313c",
+                        "tertiary-container": "#88919f",
+                        "secondary-fixed-dim": "#00dce5",
+                        "inverse-on-surface": "#2f3035",
+                        "primary": "#ffb77b",
+                        "primary-container": "#c8803f",
+                        "on-tertiary-fixed": "#131c27",
+                        "on-secondary-fixed": "#002021",
+                        "secondary": "#e6feff",
+                        "on-tertiary-container": "#212a35",
+                        "on-error": "#690005",
+                        "surface": "#121317",
+                        "error-container": "#93000a",
+                        "outline": "#a08d80",
+                        "on-secondary": "#003739",
+                        "on-surface": "#e3e2e8",
+                        "surface-container-low": "#1a1b20",
+                        "surface-container-lowest": "#0d0e12",
+                        "surface-dim": "#121317",
+                        "surface-bright": "#38393e",
+                        "surface-variant": "#343439"
+                    },
+                    "borderRadius": {
+                        "DEFAULT": "0.125rem",
+                        "lg": "0.25rem",
+                        "xl": "0.5rem",
+                        "full": "0.75rem"
+                    },
+                    "spacing": {
+                        "panel-padding": "20px",
+                        "margin-page": "24px",
+                        "gutter": "16px",
+                        "unit": "4px",
+                        "stack-gap": "12px"
+                    },
+                    "fontFamily": {
+                        "display-lg": ["Inter"],
+                        "label-caps": ["JetBrains Mono"],
+                        "headline-md": ["Inter"],
+                        "body-md": ["Inter"],
+                        "code-sm": ["JetBrains Mono"],
+                        "headline-md-mobile": ["Inter"]
+                    },
+                    "fontSize": {
+                        "display-lg": ["48px", { "lineHeight": "56px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+                        "label-caps": ["12px", { "lineHeight": "16px", "letterSpacing": "0.05em", "fontWeight": "500" }],
+                        "headline-md": ["24px", { "lineHeight": "32px", "fontWeight": "600" }],
+                        "body-md": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+                        "code-sm": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+                        "headline-md-mobile": ["20px", { "lineHeight": "28px", "fontWeight": "600" }]
+                    }
+                }
+            }
+        }
+    </script>
 <style>
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-body {
-  background: #060a08;
-  color: #c0d0c5;
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-}
+        /* Custom Styles for Glows and Animations */
+        .glass-panel {
+            background-color: rgba(31, 40, 51, 0.6);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border-top: 1px solid rgba(184, 115, 51, 0.2);
+        }
+        .teal-glow {
+            box-shadow: 0 0 15px rgba(0, 245, 255, 0.3);
+        }
+        .teal-glow-hover:hover {
+            box-shadow: 0 0 15px rgba(0, 245, 255, 0.5);
+        }
+        .copper-trace-active {
+            border-bottom: 2px solid #ffb77b;
+            background: linear-gradient(to top, rgba(255, 183, 123, 0.1), transparent);
+            color: #ffb77b !important;
+        }
+        
+        /* Layout overrides */
+        .app-grid {
+            display: grid;
+            grid-template-columns: 240px 1fr;
+            grid-template-rows: 64px 1fr 32px;
+            height: 100vh;
+            overflow: hidden;
+        }
+        
+        .main-content-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            padding: 16px;
+            height: calc(100vh - 96px);
+            overflow-y: auto;
+        }
 
-/* --- Header / Brand Bar --- */
-#header {
-  background: #0b1410;
-  border-bottom: 1px solid #1a3025;
-  padding: 8px 16px;
-  display: flex;
-  align-items: center;
-  gap: 14px;
-  flex-shrink: 0;
-  height: 52px;
-}
-#header .hex-logo {
-  width: 34px; height: 34px;
-  background: #14b8a6;
-  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
-  display: flex; align-items: center; justify-content: center;
-  font-size: 1rem; color: #060a08; font-weight: 800;
-}
-#header .title-box { display: flex; flex-direction: column; }
-#header h1 { font-size: 0.95rem; font-weight: 700; color: #eaf3ee; letter-spacing: -0.3px; }
-#header .sub { font-size: 0.65rem; color: #4d7c66; font-family: 'JetBrains Mono', Consolas, monospace; text-transform: uppercase; letter-spacing: 0.05em; }
+        .tab-pane { display: none; overflow-y: auto; }
+        .tab-pane.active { display: flex; flex-direction: column; gap: 1rem; }
 
-/* Top controls */
-.top-controls { display: flex; align-items: center; gap: 10px; margin-left: auto; }
-select.styled-select, button.styled-btn {
-  background: #111e17;
-  border: 1px solid #1a3025;
-  color: #c0d0c5;
-  font-family: 'JetBrains Mono', Consolas, monospace;
-  font-size: 0.72rem;
-  padding: 5px 10px;
-  border-radius: 5px;
-  outline: none;
-  cursor: pointer;
-  transition: all 0.2s;
-}
-select.styled-select:hover, button.styled-btn:hover { border-color: #14b8a6; color: #eaf3ee; }
-button.btn-accent { background: #14b8a6; color: #060a08; font-weight: 700; border: none; }
-button.btn-accent:hover { background: #0d9488; }
+        /* Status Dot */
+        .dot { width: 7px; height: 7px; border-radius: 50%; background: #a08d80; display: inline-block; }
+        .dot.active { background: #00f4fe; box-shadow: 0 0 6px #00f4fe; }
+        .dot.error { background: #ffb4ab; }
 
-.toggle-label { font-size: 0.7rem; color: #6d8c7c; display: flex; align-items: center; gap: 4px; cursor: pointer; }
-.toggle-label input { accent-color: #14b8a6; }
+        /* Tables & Pre */
+        table.data-table { width: 100%; border-collapse: collapse; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; }
+        table.data-table th, table.data-table td { padding: 6px 10px; text-align: left; border-bottom: 1px solid #524439; }
+        table.data-table th { color: #bec7d6; font-size: 0.65rem; text-transform: uppercase; background: #1f1f24; }
 
-/* --- Status bar --- */
-#status-bar {
-  background: #080e0b;
-  border-bottom: 1px solid #14241c;
-  padding: 4px 16px;
-  font-size: 0.7rem;
-  font-family: 'JetBrains Mono', Consolas, monospace;
-  color: #4d7c66;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  flex-shrink: 0;
-  height: 26px;
-}
-#status-bar .dot { width: 7px; height: 7px; border-radius: 50%; background: #4d7c66; display: inline-block; }
-#status-bar .dot.active { background: #14b8a6; box-shadow: 0 0 6px #14b8a6; }
-#status-bar .dot.error { background: #ef4444; }
+        /* Lint Items */
+        .lint-item {
+          display: flex; align-items: flex-start; gap: 8px;
+          padding: 7px 10px; border-radius: 5px; margin-bottom: 5px;
+          font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; line-height: 1.4;
+        }
+        .lint-item.warn  { background: #2e1500; border: 1px solid #6d3a00; color: #ffb77b; }
+        .lint-item.error { background: #4a1818; border: 1px solid #93000a; color: #ffb4ab; }
+        .lint-item.ok    { background: #003739; border: 1px solid #006c71; color: #63f7ff; }
+        .lint-item .badge { font-size: 0.58rem; padding: 1px 5px; border-radius: 3px; font-weight: 700; flex-shrink: 0; }
+        .lint-item.warn .badge  { background: #6d3a00; color: #ffb77b; }
+        .lint-item.error .badge { background: #93000a; color: #ffb4ab; }
+        .lint-item.ok .badge    { background: #006c71; color: #63f7ff; }
 
-/* --- Main Split Workspace --- */
-#main { display: flex; flex: 1; overflow: hidden; }
+        /* Progress bars */
+        .prog-row { margin-bottom: 8px; }
+        .prog-lbl { display: flex; justify-content: space-between; font-size: 0.7rem; color: #d8c3b4; margin-bottom: 3px; }
+        .prog-bg { background: #121317; border-radius: 3px; height: 6px; overflow: hidden; }
+        .prog-fill { height: 100%; background: linear-gradient(90deg, #c8803f, #ffb77b); border-radius: 3px; }
 
-/* Left Pane: Editor */
-#editor-pane { width: 45%; display: flex; flex-direction: column; border-right: 1px solid #1a3025; }
-#editor-toolbar {
-  background: #0b1410;
-  border-bottom: 1px solid #1a3025;
-  padding: 6px 14px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  font-size: 0.72rem;
-  color: #4d7c66;
-  font-family: 'JetBrains Mono', Consolas, monospace;
-  flex-shrink: 0;
-  height: 36px;
-}
-#monaco-container { flex: 1; overflow: hidden; position: relative; }
-
-/* Right Pane: Analytics Dashboard */
-#right-pane { width: 55%; display: flex; flex-direction: column; overflow: hidden; background: #070c0a; }
-
-/* KPI Strip (6-Grid) */
-#kpi-strip {
-  background: #0b1410;
-  border-bottom: 1px solid #1a3025;
-  padding: 8px 12px;
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 8px;
-  flex-shrink: 0;
-}
-.kpi-card {
-  background: #070d0a;
-  border: 1px solid #14241c;
-  border-radius: 6px;
-  padding: 6px 8px;
-  text-align: center;
-  position: relative;
-}
-.kpi-card::after { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: #14b8a6; opacity: 0.6; }
-.kpi-val { font-size: 1.1rem; font-weight: 700; color: #14b8a6; font-family: 'JetBrains Mono', Consolas, monospace; line-height: 1.1; }
-.kpi-lbl { font-size: 0.6rem; color: #4d7c66; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 3px; }
-
-/* Navigation Tabs */
-#tab-nav {
-  display: flex;
-  background: #080f0b;
-  border-bottom: 1px solid #1a3025;
-  padding: 0 8px;
-  gap: 2px;
-  flex-shrink: 0;
-  overflow-x: auto;
-}
-.tab-btn {
-  background: transparent;
-  border: none;
-  border-bottom: 2px solid transparent;
-  color: #4d7c66;
-  padding: 8px 12px;
-  font-family: 'JetBrains Mono', Consolas, monospace;
-  font-size: 0.72rem;
-  cursor: pointer;
-  white-space: nowrap;
-  transition: all 0.2s;
-}
-.tab-btn:hover { color: #8ea499; }
-.tab-btn.active { color: #14b8a6; border-bottom-color: #14b8a6; font-weight: 600; }
-
-/* Tab Body Content */
-#tab-content { flex: 1; overflow-y: auto; padding: 14px; position: relative; }
-.tab-pane { display: none; }
-.tab-pane.active { display: block; }
-
-/* Custom Styling inside tabs */
-.card-section {
-  background: #0b1410;
-  border: 1px solid #1a3025;
-  border-radius: 8px;
-  padding: 14px;
-  margin-bottom: 12px;
-}
-.sec-title {
-  font-size: 0.68rem;
-  font-weight: 700;
-  color: #4d7c66;
-  text-transform: uppercase;
-  letter-spacing: 0.1em;
-  margin-bottom: 10px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.sec-title::after { content: ''; flex: 1; height: 1px; background: #1a3025; }
-
-/* Lint Items */
-.lint-item {
-  display: flex; align-items: flex-start; gap: 8px;
-  padding: 7px 10px; border-radius: 5px; margin-bottom: 5px;
-  font-family: 'JetBrains Mono', Consolas, monospace; font-size: 0.75rem; line-height: 1.4;
-}
-.lint-item.warn  { background: #1a150c; border: 1px solid #3d2d10; color: #f59e0b; }
-.lint-item.error { background: #1e0e0e; border: 1px solid #4a1818; color: #f87171; }
-.lint-item.ok    { background: #081a11; border: 1px solid #144026; color: #10b981; }
-.lint-item .badge { font-size: 0.58rem; padding: 1px 5px; border-radius: 3px; font-weight: 700; flex-shrink: 0; }
-.lint-item.warn .badge  { background: #3d2d10; color: #f59e0b; }
-.lint-item.error .badge { background: #4a1818; color: #f87171; }
-.lint-item.ok .badge    { background: #144026; color: #10b981; }
-
-/* Progress bars */
-.prog-row { margin-bottom: 8px; }
-.prog-lbl { display: flex; justify-content: space-between; font-size: 0.7rem; color: #8ea499; margin-bottom: 3px; }
-.prog-bg { background: #111d17; border-radius: 3px; height: 6px; overflow: hidden; }
-.prog-fill { height: 100%; background: linear-gradient(90deg, #10b981, #14b8a6); border-radius: 3px; }
-
-/* Tables */
-table.data-table { width: 100%; border-collapse: collapse; font-family: 'JetBrains Mono', Consolas, monospace; font-size: 0.75rem; }
-table.data-table th, table.data-table td { padding: 6px 10px; text-align: left; border-bottom: 1px solid #1a3025; }
-table.data-table th { color: #4d7c66; font-size: 0.65rem; text-transform: uppercase; background: #080f0b; }
-
-/* Code box */
-pre.code-block { background: #070c0a; border: 1px solid #1a3025; border-radius: 6px; padding: 12px; font-family: 'JetBrains Mono', Consolas, monospace; font-size: 0.75rem; color: #8fd4b2; white-space: pre-wrap; overflow-x: auto; }
-
-/* Scrollbars */
-::-webkit-scrollbar { width: 5px; height: 5px; }
-::-webkit-scrollbar-track { background: #060a08; }
-::-webkit-scrollbar-thumb { background: #1a3025; border-radius: 3px; }
-</style>
+        pre.code-block { background: #0d0e12; border: 1px solid #524439; border-radius: 6px; padding: 12px; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: #63f7ff; white-space: pre-wrap; overflow-x: auto; }
+        ::-webkit-scrollbar { width: 5px; height: 5px; }
+        ::-webkit-scrollbar-track { background: #121317; }
+        ::-webkit-scrollbar-thumb { background: #343439; border-radius: 3px; }
+    </style>
 </head>
-<body>
+<body class="bg-background text-on-background font-body-md text-body-md m-0 p-0 overflow-hidden">
+<div class="app-grid">
 
-<!-- Header -->
-<div id="header">
-  <div class="hex-logo">⬡</div>
-  <div class="title-box">
-    <h1>EDA Assistant</h1>
-    <div class="sub">Unified RTL Intelligence & Verification Platform</div>
-  </div>
+<!-- TopNavBar -->
+<header class="col-span-2 bg-surface-container/60 backdrop-blur-xl border-b border-outline-variant/20 shadow-md flex justify-between items-center w-full px-6 h-16 z-20">
+<div class="flex items-center gap-4">
+<span class="font-display-lg text-2xl font-bold text-primary flex items-center gap-2">
+  <span class="text-secondary-container">⬡</span> FluxCore EDA
+</span>
+<div class="hidden md:flex items-center gap-3 ml-6">
+  <select id="sample-select" class="bg-surface-container-high text-on-surface font-label-caps text-xs px-3 py-1.5 rounded border border-outline-variant/40 outline-none hover:border-primary transition-colors cursor-pointer" onchange="loadSample(this.value)">
+    <option value="">📂 Select Sample Design...</option>
+  </select>
+  <label for="file-upload" class="bg-surface-variant text-on-surface-variant font-label-caps text-xs px-3 py-1.5 rounded hover:text-secondary-container transition-colors cursor-pointer border border-outline-variant/30">
+    📁 Upload .v
+  </label>
+  <input type="file" id="file-upload" accept=".v,.sv" style="display:none" onchange="handleFileUpload(event)"/>
+</div>
+</div>
 
-  <div class="top-controls">
-    <select id="sample-select" class="styled-select" onchange="loadSample(this.value)">
-      <option value="">📂 Select Sample Design...</option>
-    </select>
-    <label for="file-upload" class="styled-btn" style="display:inline-block;">📁 Upload .v</label>
-    <input type="file" id="file-upload" accept=".v,.sv" style="display:none" onchange="handleFileUpload(event)"/>
+<div class="flex items-center gap-4">
+  <label class="text-xs font-label-caps text-on-surface-variant flex items-center gap-1.5 cursor-pointer">
+    <input type="checkbox" id="toggle-llm" class="accent-primary rounded"/> 🧠 Gemini
+  </label>
+  <label class="text-xs font-label-caps text-on-surface-variant flex items-center gap-1.5 cursor-pointer">
+    <input type="checkbox" id="toggle-tb" checked class="accent-secondary-container rounded"/> 🧪 Testbench
+  </label>
 
-    <label class="toggle-label"><input type="checkbox" id="toggle-llm"/> 🧠 Gemini</label>
-    <label class="toggle-label"><input type="checkbox" id="toggle-tb" checked/> 🧪 Testbench</label>
+  <button id="run-btn" class="bg-primary-container text-on-primary-container font-label-caps text-xs px-4 py-2 rounded shadow-md teal-glow teal-glow-hover hover:text-secondary-container transition-colors font-bold" onclick="runNow()">
+    🚀 Run Analysis
+  </button>
+</div>
+</header>
 
-    <button id="run-btn" class="styled-btn btn-accent" onclick="runNow()">🚀 Run Analysis</button>
+<!-- SideNavBar -->
+<aside class="row-start-2 col-start-1 bg-surface-container-low/60 backdrop-blur-xl h-full border-r border-outline-variant/20 flex flex-col py-4 z-10">
+<div class="px-4 mb-4 flex flex-col gap-1.5">
+  <h2 class="font-headline-md text-lg text-primary font-bold truncate flex items-center gap-2">
+    <span class="material-symbols-outlined text-secondary-container text-xl">memory</span>
+    Hardware Assistant
+  </h2>
+  <span class="font-code-sm text-xs text-on-surface-variant" id="module-info">Module: alu_8bit</span>
+  <div class="mt-2 text-xs text-outline flex items-center gap-1.5">
+    <span class="dot" id="status-dot"></span>
+    <span id="status-text" class="truncate">Ready for synthesis</span>
   </div>
 </div>
 
-<!-- Status Bar -->
-<div id="status-bar">
-  <span><span class="dot" id="status-dot"></span> <span id="status-text">Ready — select a sample or paste Verilog code to analyze</span></span>
-  <span id="module-info" style="margin-left:auto;color:#4d7c66">Module: —</span>
-</div>
+<nav class="flex-1 flex flex-col gap-1 px-3 overflow-y-auto">
+  <a class="flex items-center gap-3 py-2 text-primary font-bold bg-surface-variant/30 rounded px-3" href="#">
+    <span class="material-symbols-outlined text-primary text-sm">code</span>
+    <span class="font-label-caps text-xs">RTL Editor</span>
+  </a>
+  <a class="flex items-center gap-3 py-2 text-on-surface-variant hover:bg-surface-variant/30 transition-all rounded px-3" href="#" onclick="switchTab('t-synth'); return false;">
+    <span class="material-symbols-outlined text-tertiary text-sm">account_tree</span>
+    <span class="font-label-caps text-xs">Gate Netlist</span>
+  </a>
+  <a class="flex items-center gap-3 py-2 text-on-surface-variant hover:bg-surface-variant/30 transition-all rounded px-3" href="#" onclick="switchTab('t-lint'); return false;">
+    <span class="material-symbols-outlined text-tertiary text-sm">bug_report</span>
+    <span class="font-label-caps text-xs">ML Bug Risk</span>
+  </a>
+  <a class="flex items-center gap-3 py-2 text-on-surface-variant hover:bg-surface-variant/30 transition-all rounded px-3" href="#" onclick="switchTab('t-ppa'); return false;">
+    <span class="material-symbols-outlined text-tertiary text-sm">electric_bolt</span>
+    <span class="font-label-caps text-xs">PPA Analytics</span>
+  </a>
+  <a class="flex items-center gap-3 py-2 text-on-surface-variant hover:bg-surface-variant/30 transition-all rounded px-3" href="#" onclick="switchTab('t-tb'); return false;">
+    <span class="material-symbols-outlined text-tertiary text-sm">biotech</span>
+    <span class="font-label-caps text-xs">Simulation</span>
+  </a>
+  <a class="flex items-center gap-3 py-2 text-on-surface-variant hover:bg-surface-variant/30 transition-all rounded px-3" href="#" onclick="switchTab('t-compare'); return false;">
+    <span class="material-symbols-outlined text-tertiary text-sm">compare_arrows</span>
+    <span class="font-label-caps text-xs">Design Delta</span>
+  </a>
+</nav>
 
-<!-- Main Split View -->
-<div id="main">
-  <!-- Left: Editor Pane -->
-  <div id="editor-pane">
-    <div id="editor-toolbar">
-      <span id="file-name-lbl">📝 verilog_design.v</span>
-      <span style="color:#4d7c66;font-size:0.65rem">Auto-Analysis Debounced</span>
-    </div>
-    <div id="monaco-container">
-      <textarea id="code-textarea" style="width:100%;height:100%;background:#070c0a;color:#8fd4b2;border:none;padding:12px;font-family:'JetBrains Mono',Consolas,monospace;font-size:13px;outline:none;resize:none;" oninput="onCodeInput()"></textarea>
-    </div>
+<div class="mt-auto px-4 flex flex-col gap-1 border-t border-outline-variant/20 pt-3">
+  <div class="flex items-center justify-between text-xs text-on-surface-variant">
+    <span>Engine</span>
+    <span class="text-secondary-container font-mono">Yosys+Iverilog</span>
   </div>
+</div>
+</aside>
 
-  <!-- Right: Unified Intelligence Platform -->
-  <div id="right-pane">
-    <!-- Top 6-KPI Strip -->
-    <div id="kpi-strip">
-      <div class="kpi-card">
-        <div class="kpi-val" id="k-grade">—</div>
-        <div class="kpi-lbl">RTL Grade</div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-val" id="k-lint" style="color:#f59e0b">—</div>
-        <div class="kpi-lbl">Lint Issues</div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-val" id="k-cells">—</div>
-        <div class="kpi-lbl">Total Cells</div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-val" id="k-delay" style="color:#3b82f6">—</div>
-        <div class="kpi-lbl">Critical Path</div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-val" id="k-power">—</div>
-        <div class="kpi-lbl">Total Power</div>
-      </div>
-      <div class="kpi-card">
-        <div class="kpi-val" id="k-area" style="color:#eab308">—</div>
-        <div class="kpi-lbl">Silicon Area</div>
-      </div>
-    </div>
+<!-- Main Content Canvas -->
+<main class="row-start-2 col-start-2 main-content-grid">
 
-    <!-- Navigation Tabs -->
-    <div id="tab-nav">
-      <button class="tab-btn active" onclick="switchTab('t-synth')">⬡ Gate Synthesis</button>
-      <button class="tab-btn" onclick="switchTab('t-lint')">⚡ Lint & ML Bug Risk</button>
-      <button class="tab-btn" onclick="switchTab('t-quality')">📋 RTL Quality</button>
-      <button class="tab-btn" onclick="switchTab('t-ppa')">🔌 45nm PPA</button>
-      <button class="tab-btn" onclick="switchTab('t-metrics')">📊 Complexity</button>
-      <button class="tab-btn" onclick="switchTab('t-tb')">🧪 Testbench & Sim</button>
-      <button class="tab-btn" onclick="switchTab('t-compare')">⚖️ Design Comparison</button>
-      <button class="tab-btn" onclick="switchTab('t-report')">📄 Report & Export</button>
-    </div>
+<!-- Left Pane: Code Editor -->
+<section class="glass-panel rounded-lg flex flex-col h-full overflow-hidden shadow-lg border border-outline-variant/30">
+  <div class="bg-surface-container-high px-4 py-2 border-b border-outline-variant/30 flex justify-between items-center shrink-0">
+    <span class="font-label-caps text-xs text-primary font-bold flex items-center gap-1.5" id="file-name-lbl">
+      📝 verilog_design.v
+    </span>
+    <span class="text-xs text-on-surface-variant font-mono">Auto-Parse Active</span>
+  </div>
+  <div id="monaco-container" class="flex-1 w-full h-full relative overflow-hidden bg-surface-container-lowest">
+    <textarea id="code-textarea" class="w-full h-full bg-surface-container-lowest text-secondary font-mono text-sm p-4 outline-none border-none resize-none" oninput="onCodeInput()"></textarea>
+  </div>
+</section>
 
-    <!-- Tab Content Container -->
-    <div id="tab-content">
+<!-- Right Pane: Analytics & Dashboards -->
+<section class="flex flex-col gap-3 h-full overflow-hidden">
 
-      <!-- TAB 1: SYNTHESIS & GATES -->
-      <div id="t-synth" class="tab-pane active">
-        <div class="card-section">
-          <div class="sec-title">Synthesized Gate Distribution (SVG Chart)</div>
-          <div id="gate-chart-container" style="min-height:220px;">
-            <div style="color:#4d7c66;text-align:center;padding:40px;font-size:0.8rem">Run analysis to generate gate chart</div>
-          </div>
-        </div>
-        <div class="card-section">
-          <div class="sec-title">Yosys Technology-Independent Netlist Summary</div>
-          <table class="data-table">
-            <thead><tr><th>Gate Cell Type</th><th>Count</th><th>Category</th></tr></thead>
-            <tbody id="gate-table-body">
-              <tr><td colspan="3" style="color:#4d7c66;text-align:center">No synthesis data</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- TAB 2: LINT & ML BUG RISK -->
-      <div id="t-lint" class="tab-pane">
-        <div class="card-section" id="ml-bug-card" style="border-left: 4px solid #14b8a6;">
-          <div class="sec-title">Predictive ML Pattern Anomaly Classifier</div>
-          <div style="display:flex;align-items:center;justify-content:space-between">
-            <div>
-              <div style="font-size:0.75rem;color:#8ea499">RandomForest Anomaly Score</div>
-              <div id="bug-prob-val" style="font-size:1.8rem;font-weight:700;color:#14b8a6;font-family:'JetBrains Mono',Consolas,monospace">0.0%</div>
-            </div>
-            <div id="bug-prob-badge" style="background:#09241b;border:1px solid #14b8a6;color:#14b8a6;padding:4px 12px;border-radius:20px;font-size:0.72rem;font-weight:700;">
-              LOW RISK
-            </div>
-          </div>
-        </div>
-        <div class="card-section">
-          <div class="sec-title">Custom 10-Rule AST Static Linter</div>
-          <div id="custom-lint-list">
-            <div class="lint-item ok"><span class="badge">CLEAN</span>No lint issues detected.</div>
-          </div>
-        </div>
-        <div class="card-section">
-          <div class="sec-title">Verilator Linter Direct Output</div>
-          <pre id="verilator-out-box" class="code-block" style="font-size:0.7rem;max-height:160px;overflow-y:auto;">Verilator output clean.</pre>
-        </div>
-      </div>
-
-      <!-- TAB 3: RTL QUALITY SCORECARD -->
-      <div id="t-quality" class="tab-pane">
-        <div class="card-section" style="display:flex;gap:20px;align-items:center">
-          <div style="text-align:center;background:#081510;border:1px solid #1a3025;padding:16px;border-radius:8px;min-width:110px">
-            <div style="font-size:0.65rem;color:#4d7c66">LETTER GRADE</div>
-            <div id="q-grade-badge" style="font-size:3rem;font-weight:800;color:#14b8a6;font-family:'JetBrains Mono',Consolas,monospace">A+</div>
-            <div id="q-total-score" style="font-size:0.85rem;color:#eaf3ee;font-weight:600">100 / 100</div>
-          </div>
-          <div style="flex:1" id="q-breakdown-box">
-            <!-- Score factors populated by JS -->
-          </div>
-        </div>
-        <div class="card-section">
-          <div class="sec-title">VLSI Optimization Path & Recommendations</div>
-          <div id="q-recs-box" style="font-size:0.78rem;line-height:1.6;color:#c0d0c5">
-            No optimization warnings needed. Code quality is golden!
-          </div>
-        </div>
-        <div class="card-section">
-          <div class="sec-title">Gemini RTL Architecture Explanation</div>
-          <div id="llm-box" style="font-size:0.78rem;line-height:1.6;color:#8fd4b2;background:#070c0a;padding:12px;border-radius:6px;border:1px solid #1a3025;">
-            LLM explanation will appear here when enabled.
-          </div>
-        </div>
-      </div>
-
-      <!-- TAB 4: 45nm PPA POWER & TIMING -->
-      <div id="t-ppa" class="tab-pane">
-        <div class="card-section" style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px">
-          <div>
-            <div style="font-size:0.68rem;color:#4d7c66;text-transform:uppercase">Estimated Silicon Area</div>
-            <div id="ppa-area" style="font-size:1.6rem;font-weight:700;color:#eab308;font-family:'JetBrains Mono',Consolas,monospace">0.0 μm²</div>
-            <div style="font-size:0.68rem;color:#6d8c7c;margin-top:4px">Standard cell active gate footprint</div>
-          </div>
-          <div>
-            <div style="font-size:0.68rem;color:#4d7c66;text-transform:uppercase">Total Power @100MHz</div>
-            <div id="ppa-power" style="font-size:1.6rem;font-weight:700;color:#14b8a6;font-family:'JetBrains Mono',Consolas,monospace">0.0 μW</div>
-            <div id="ppa-power-sub" style="font-size:0.68rem;color:#6d8c7c;margin-top:4px">Leakage: 0 nW · Dynamic: 0 μW</div>
-          </div>
-          <div>
-            <div style="font-size:0.68rem;color:#4d7c66;text-transform:uppercase">Critical Path Delay</div>
-            <div id="ppa-path" style="font-size:1.6rem;font-weight:700;color:#3b82f6;font-family:'JetBrains Mono',Consolas,monospace">0 ps</div>
-            <div id="ppa-stages" style="font-size:0.68rem;color:#6d8c7c;margin-top:4px">0 logic stages</div>
-          </div>
-          <div>
-            <div style="font-size:0.68rem;color:#4d7c66;text-transform:uppercase">Maximum Clock Frequency</div>
-            <div id="ppa-fmax" style="font-size:1.6rem;font-weight:700;color:#ef4444;font-family:'JetBrains Mono',Consolas,monospace">0 MHz</div>
-            <div style="font-size:0.68rem;color:#6d8c7c;margin-top:4px">45nm CMOS cell library estimate</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- TAB 5: COMPLEXITY ANALYTICS -->
-      <div id="t-metrics" class="tab-pane">
-        <div class="card-section" style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px">
-          <div>
-            <div style="font-size:0.68rem;color:#4d7c66">McCabe Cyclomatic Complexity</div>
-            <div id="cx-cc" style="font-size:2rem;font-weight:700;color:#14b8a6;font-family:'JetBrains Mono',Consolas,monospace">0</div>
-            <div style="font-size:0.68rem;color:#6d8c7c;margin-top:4px">1 + if_statements + case_branches</div>
-          </div>
-          <div>
-            <div style="font-size:0.68rem;color:#4d7c66">Register Storage Allocation</div>
-            <div id="cx-regs" style="font-size:2rem;font-weight:700;color:#3b82f6;font-family:'JetBrains Mono',Consolas,monospace">0 bits</div>
-            <div style="font-size:0.68rem;color:#6d8c7c;margin-top:4px">Total Flip-Flop/Register capacity</div>
-          </div>
-        </div>
-        <div class="card-section">
-          <div class="sec-title">Structural Signals & Control Density</div>
-          <table class="data-table">
-            <thead><tr><th>Metric Name</th><th>Value</th></tr></thead>
-            <tbody id="cx-table-body">
-              <!-- Populated by JS -->
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- TAB 6: TESTBENCH & SIMULATION -->
-      <div id="t-tb" class="tab-pane">
-        <div class="card-section">
-          <div class="sec-title">Iverilog Testbench Compilation Status</div>
-          <div id="tb-status-badge" class="lint-item ok"><span class="badge">COMPILED</span>Testbench compiles cleanly</div>
-        </div>
-        <div class="card-section">
-          <div class="sec-title">Auto-Generated Verilog Testbench</div>
-          <pre id="tb-code-box" class="code-block" style="max-height:200px;overflow-y:auto;">// Generated testbench will appear here</pre>
-        </div>
-        <div class="card-section">
-          <div class="sec-title">VVP Simulation stdout Log</div>
-          <pre id="tb-sim-box" class="code-block" style="max-height:160px;overflow-y:auto;">// Simulation output will appear here</pre>
-        </div>
-      </div>
-
-      <!-- TAB 7: DESIGN COMPARISON -->
-      <div id="t-compare" class="tab-pane">
-        <div class="card-section" style="display:flex;gap:12px;align-items:center">
-          <div style="flex:1">
-            <label style="font-size:0.7rem;color:#4d7c66;display:block;margin-bottom:4px">Select Comparison Target Sample</label>
-            <select id="compare-select" class="styled-select" style="width:100%">
-              <option value="">Choose target design...</option>
-            </select>
-          </div>
-          <button class="styled-btn btn-accent" onclick="runComparison()" style="margin-top:16px">⚖️ Compare Designs</button>
-        </div>
-        <div class="card-section">
-          <div class="sec-title">Side-by-Side Design Delta Analysis</div>
-          <table class="data-table">
-            <thead><tr><th>Metric</th><th>Baseline (Current)</th><th>Target</th><th>Delta</th></tr></thead>
-            <tbody id="compare-table-body">
-              <tr><td colspan="4" style="color:#4d7c66;text-align:center">Select a target design and click "Compare Designs"</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- TAB 8: REPORT & EXPORT -->
-      <div id="t-report" class="tab-pane">
-        <div class="card-section">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
-            <div class="sec-title" style="margin-bottom:0">Full Engineering Report</div>
-            <div style="display:flex;gap:8px">
-              <button class="styled-btn" onclick="copyReport()">📋 Copy Report</button>
-              <button class="styled-btn btn-accent" onclick="downloadReport()">⬇ Download .txt</button>
-            </div>
-          </div>
-          <pre id="report-text-box" class="code-block" style="max-height:360px;overflow-y:auto;">// Full report text will appear here</pre>
-        </div>
-      </div>
-
-    </div>
+<!-- 6-KPI Grid -->
+<div class="grid grid-cols-6 gap-2 shrink-0">
+  <div class="glass-panel p-2.5 rounded-lg flex flex-col items-center justify-center border border-outline-variant/30 text-center">
+    <span class="font-label-caps text-[10px] text-on-surface-variant">Grade</span>
+    <span class="font-headline-md text-lg text-secondary-container font-bold font-mono" id="k-grade">—</span>
+  </div>
+  <div class="glass-panel p-2.5 rounded-lg flex flex-col items-center justify-center border border-outline-variant/30 text-center">
+    <span class="font-label-caps text-[10px] text-on-surface-variant">Lint Issues</span>
+    <span class="font-headline-md text-lg text-primary font-bold font-mono" id="k-lint">—</span>
+  </div>
+  <div class="glass-panel p-2.5 rounded-lg flex flex-col items-center justify-center border border-outline-variant/30 text-center">
+    <span class="font-label-caps text-[10px] text-on-surface-variant">Cells</span>
+    <span class="font-headline-md text-lg text-on-surface font-bold font-mono" id="k-cells">—</span>
+  </div>
+  <div class="glass-panel p-2.5 rounded-lg flex flex-col items-center justify-center border border-outline-variant/30 text-center">
+    <span class="font-label-caps text-[10px] text-on-surface-variant">Delay (ps)</span>
+    <span class="font-headline-md text-lg text-secondary-fixed-dim font-bold font-mono" id="k-delay">—</span>
+  </div>
+  <div class="glass-panel p-2.5 rounded-lg flex flex-col items-center justify-center border border-outline-variant/30 text-center">
+    <span class="font-label-caps text-[10px] text-on-surface-variant">Power (μW)</span>
+    <span class="font-headline-md text-lg text-primary-fixed-dim font-bold font-mono" id="k-power">—</span>
+  </div>
+  <div class="glass-panel p-2.5 rounded-lg flex flex-col items-center justify-center border border-outline-variant/30 text-center">
+    <span class="font-label-caps text-[10px] text-on-surface-variant">Area (μm²)</span>
+    <span class="font-headline-md text-lg text-tertiary font-bold font-mono" id="k-area">—</span>
   </div>
 </div>
 
+<!-- Tabbed Analytics Dashboard Container -->
+<div class="glass-panel rounded-lg flex flex-col flex-1 border border-outline-variant/30 overflow-hidden">
+  
+  <!-- Tab Navigation -->
+  <div class="flex border-b border-outline-variant/30 bg-surface-container-high overflow-x-auto shrink-0">
+    <button class="tab-btn active px-4 py-2.5 font-label-caps text-xs text-on-surface-variant hover:text-primary transition-colors whitespace-nowrap copper-trace-active" onclick="switchTab('t-synth')">⬡ Gate Synthesis</button>
+    <button class="tab-btn px-4 py-2.5 font-label-caps text-xs text-on-surface-variant hover:text-primary transition-colors whitespace-nowrap" onclick="switchTab('t-lint')">⚡ Lint & ML Risk</button>
+    <button class="tab-btn px-4 py-2.5 font-label-caps text-xs text-on-surface-variant hover:text-primary transition-colors whitespace-nowrap" onclick="switchTab('t-quality')">📋 RTL Quality</button>
+    <button class="tab-btn px-4 py-2.5 font-label-caps text-xs text-on-surface-variant hover:text-primary transition-colors whitespace-nowrap" onclick="switchTab('t-ppa')">🔌 45nm PPA</button>
+    <button class="tab-btn px-4 py-2.5 font-label-caps text-xs text-on-surface-variant hover:text-primary transition-colors whitespace-nowrap" onclick="switchTab('t-metrics')">📊 Complexity</button>
+    <button class="tab-btn px-4 py-2.5 font-label-caps text-xs text-on-surface-variant hover:text-primary transition-colors whitespace-nowrap" onclick="switchTab('t-tb')">🧪 Testbench & Sim</button>
+    <button class="tab-btn px-4 py-2.5 font-label-caps text-xs text-on-surface-variant hover:text-primary transition-colors whitespace-nowrap" onclick="switchTab('t-compare')">⚖️ Comparison</button>
+    <button class="tab-btn px-4 py-2.5 font-label-caps text-xs text-on-surface-variant hover:text-primary transition-colors whitespace-nowrap" onclick="switchTab('t-report')">📄 Report</button>
+  </div>
+
+  <!-- Tab Content Body -->
+  <div class="p-4 flex-1 overflow-y-auto bg-surface-container-lowest/50">
+
+    <!-- TAB 1: GATE SYNTHESIS -->
+    <div id="t-synth" class="tab-pane active">
+      <div class="bg-surface-container-high/40 p-4 rounded border border-outline-variant/20">
+        <h4 class="text-xs font-bold text-primary uppercase tracking-wider mb-2">Synthesized Gate Distribution (SVG Chart)</h4>
+        <div id="gate-chart-container" class="min-h-[180px] flex items-center justify-center text-xs text-outline">
+          Run analysis to generate gate distribution chart
+        </div>
+      </div>
+      <div class="bg-surface-container-high/40 p-4 rounded border border-outline-variant/20">
+        <h4 class="text-xs font-bold text-primary uppercase tracking-wider mb-2">Technology-Independent Gate Netlist</h4>
+        <table class="data-table">
+          <thead><tr><th>Gate Cell Type</th><th>Count</th><th>Category</th></tr></thead>
+          <tbody id="gate-table-body">
+            <tr><td colspan="3" class="text-center text-outline">No synthesis data</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB 2: LINT & ML BUG RISK -->
+    <div id="t-lint" class="tab-pane">
+      <div class="bg-surface-container-high/40 p-4 rounded border-l-4 border-secondary-container border-y border-r border-outline-variant/20">
+        <div class="flex items-center justify-between">
+          <div>
+            <div class="text-xs text-on-surface-variant font-label-caps">RandomForest Bug Anomaly Score</div>
+            <div id="bug-prob-val" class="text-2xl font-bold text-secondary-container font-mono mt-1">0.0%</div>
+          </div>
+          <div id="bug-prob-badge" class="bg-surface-container text-secondary-container border border-secondary-container px-3 py-1 rounded-full text-xs font-bold font-mono">
+            LOW RISK
+          </div>
+        </div>
+      </div>
+      <div class="bg-surface-container-high/40 p-4 rounded border border-outline-variant/20">
+        <h4 class="text-xs font-bold text-primary uppercase tracking-wider mb-2">Static AST Linter Warnings</h4>
+        <div id="custom-lint-list">
+          <div class="lint-item ok"><span class="badge">CLEAN</span>No lint warnings detected.</div>
+        </div>
+      </div>
+      <div class="bg-surface-container-high/40 p-4 rounded border border-outline-variant/20">
+        <h4 class="text-xs font-bold text-primary uppercase tracking-wider mb-2">Verilator Direct Console</h4>
+        <pre id="verilator-out-box" class="code-block text-xs max-h-36">Verilator output clean.</pre>
+      </div>
+    </div>
+
+    <!-- TAB 3: RTL QUALITY SCORECARD -->
+    <div id="t-quality" class="tab-pane">
+      <div class="flex gap-4 items-center bg-surface-container-high/40 p-4 rounded border border-outline-variant/20">
+        <div class="text-center bg-surface-container p-3 rounded min-w-[100px] border border-outline-variant/40">
+          <div class="text-[10px] text-outline">GRADE</div>
+          <div id="q-grade-badge" class="text-3xl font-extrabold text-secondary-container font-mono">A+</div>
+          <div id="q-total-score" class="text-xs text-on-surface mt-0.5">100 / 100</div>
+        </div>
+        <div id="q-breakdown-box" class="flex-1 flex flex-col justify-center"></div>
+      </div>
+      <div class="bg-surface-container-high/40 p-4 rounded border border-outline-variant/20">
+        <h4 class="text-xs font-bold text-primary uppercase tracking-wider mb-2">Optimization Path</h4>
+        <div id="q-recs-box" class="text-xs text-on-surface leading-relaxed">
+          No optimization warnings needed. Code quality is golden!
+        </div>
+      </div>
+      <div class="bg-surface-container-high/40 p-4 rounded border border-outline-variant/20">
+        <h4 class="text-xs font-bold text-primary uppercase tracking-wider mb-2">Gemini Architecture Notes</h4>
+        <div id="llm-box" class="text-xs text-secondary bg-surface-container-lowest p-3 rounded border border-outline-variant/30 font-mono">
+          LLM explanation will appear here when enabled.
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 4: 45nm PPA -->
+    <div id="t-ppa" class="tab-pane">
+      <div class="grid grid-cols-2 gap-3">
+        <div class="bg-surface-container-high/40 p-3.5 rounded border border-outline-variant/20">
+          <div class="text-[10px] text-outline uppercase">Silicon Area</div>
+          <div id="ppa-area" class="text-xl font-bold text-primary font-mono mt-1">0.0 μm²</div>
+        </div>
+        <div class="bg-surface-container-high/40 p-3.5 rounded border border-outline-variant/20">
+          <div class="text-[10px] text-outline uppercase">Total Power @100MHz</div>
+          <div id="ppa-power" class="text-xl font-bold text-secondary-container font-mono mt-1">0.0 μW</div>
+          <div id="ppa-power-sub" class="text-[10px] text-outline mt-1">Leakage: 0 nW · Dynamic: 0 μW</div>
+        </div>
+        <div class="bg-surface-container-high/40 p-3.5 rounded border border-outline-variant/20">
+          <div class="text-[10px] text-outline uppercase">Critical Path Delay</div>
+          <div id="ppa-path" class="text-xl font-bold text-secondary-fixed-dim font-mono mt-1">0 ps</div>
+          <div id="ppa-stages" class="text-[10px] text-outline mt-1">0 logic stages</div>
+        </div>
+        <div class="bg-surface-container-high/40 p-3.5 rounded border border-outline-variant/20">
+          <div class="text-[10px] text-outline uppercase">Max Frequency (Fmax)</div>
+          <div id="ppa-fmax" class="text-xl font-bold text-error font-mono mt-1">0 MHz</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB 5: COMPLEXITY -->
+    <div id="t-metrics" class="tab-pane">
+      <div class="grid grid-cols-2 gap-3">
+        <div class="bg-surface-container-high/40 p-3.5 rounded border border-outline-variant/20">
+          <div class="text-[10px] text-outline">McCabe Complexity</div>
+          <div id="cx-cc" class="text-2xl font-bold text-secondary-container font-mono mt-1">0</div>
+        </div>
+        <div class="bg-surface-container-high/40 p-3.5 rounded border border-outline-variant/20">
+          <div class="text-[10px] text-outline">Register Storage</div>
+          <div id="cx-regs" class="text-2xl font-bold text-secondary-fixed-dim font-mono mt-1">0 bits</div>
+        </div>
+      </div>
+      <div class="bg-surface-container-high/40 p-4 rounded border border-outline-variant/20">
+        <h4 class="text-xs font-bold text-primary uppercase tracking-wider mb-2">Structural Signals</h4>
+        <table class="data-table">
+          <thead><tr><th>Metric Name</th><th>Value</th></tr></thead>
+          <tbody id="cx-table-body"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB 6: TESTBENCH -->
+    <div id="t-tb" class="tab-pane">
+      <div class="bg-surface-container-high/40 p-3 rounded border border-outline-variant/20">
+        <div id="tb-status-badge" class="lint-item ok"><span class="badge">COMPILED</span>Testbench compiles cleanly</div>
+      </div>
+      <div class="bg-surface-container-high/40 p-4 rounded border border-outline-variant/20">
+        <h4 class="text-xs font-bold text-primary uppercase tracking-wider mb-2">Auto-Generated Verilog Testbench</h4>
+        <pre id="tb-code-box" class="code-block text-xs max-h-44">// Testbench snippet</pre>
+      </div>
+      <div class="bg-surface-container-high/40 p-4 rounded border border-outline-variant/20">
+        <h4 class="text-xs font-bold text-primary uppercase tracking-wider mb-2">VVP Simulation Output</h4>
+        <pre id="tb-sim-box" class="code-block text-xs max-h-36">// Simulation log</pre>
+      </div>
+    </div>
+
+    <!-- TAB 7: COMPARISON -->
+    <div id="t-compare" class="tab-pane">
+      <div class="flex items-center gap-3 bg-surface-container-high/40 p-3 rounded border border-outline-variant/20">
+        <select id="compare-select" class="bg-surface-container text-on-surface text-xs p-2 rounded border border-outline-variant flex-1 outline-none">
+          <option value="">Choose target design...</option>
+        </select>
+        <button class="bg-primary-container text-on-primary-container text-xs px-3 py-2 rounded font-bold hover:text-secondary-container" onclick="runComparison()">
+          ⚖️ Compare
+        </button>
+      </div>
+      <div class="bg-surface-container-high/40 p-4 rounded border border-outline-variant/20">
+        <table class="data-table">
+          <thead><tr><th>Metric</th><th>Baseline</th><th>Target</th><th>Delta</th></tr></thead>
+          <tbody id="compare-table-body">
+            <tr><td colspan="4" class="text-center text-outline">Select target design to compare</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- TAB 8: REPORT -->
+    <div id="t-report" class="tab-pane">
+      <div class="flex justify-between items-center">
+        <h4 class="text-xs font-bold text-primary uppercase">Engineering Summary Report</h4>
+        <div class="flex gap-2">
+          <button class="bg-surface-variant text-xs text-on-surface px-3 py-1 rounded hover:text-secondary-container" onclick="copyReport()">📋 Copy</button>
+          <button class="bg-primary-container text-xs text-on-primary-container px-3 py-1 rounded font-bold" onclick="downloadReport()">⬇ Download .txt</button>
+        </div>
+      </div>
+      <pre id="report-text-box" class="code-block text-xs flex-1 max-h-80">// Report output</pre>
+    </div>
+
+  </div>
+</div>
+
+</section>
+</main>
+
+<!-- Footer -->
+<footer class="col-span-2 bg-surface-container-highest border-t border-outline-variant/30 flex justify-between items-center px-6 h-8 z-20">
+  <span class="font-code-sm text-xs text-on-tertiary-fixed-variant">© 2024 FluxCore EDA Assistant. Backend Engine: Active.</span>
+  <div class="flex gap-4 text-xs text-on-tertiary-fixed-variant">
+    <span>FastAPI v2.0</span>
+    <span>•</span>
+    <span>Yosys 0.38</span>
+    <span>•</span>
+    <span>Iverilog 12.0</span>
+  </div>
+</footer>
+
+</div>
+
+<!-- Monaco Editor Loader & Core Scripts -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/loader.min.js" defer></script>
 <script>
 const API_BASE = window.location.origin;
 let editor = null;
@@ -542,7 +567,6 @@ module alu_8bit (
 
 endmodule`;
 
-// Initialize code text immediately
 document.getElementById('code-textarea').value = DEFAULT_CODE;
 
 function getCode() {
@@ -564,60 +588,77 @@ function onCodeInput() {
   debounceTimer = setTimeout(runAnalysis, 1200);
 }
 
-// Asynchronously load Monaco Editor without blocking page render
 function loadMonacoAsync() {
-  const script = document.createElement('script');
-  script.src = 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/loader.min.js';
-  script.async = true;
-  script.onload = () => {
-    try {
-      require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs' } });
-      require(['vs/editor/editor.main'], function() {
-        const container = document.getElementById('monaco-container');
-        const ta = document.getElementById('code-textarea');
-        const initCode = ta ? ta.value : DEFAULT_CODE;
-        if (ta) ta.style.display = 'none';
+  if (typeof require === 'undefined') {
+    // loader.min.js with defer not yet available — retry
+    setTimeout(loadMonacoAsync, 400);
+    return;
+  }
+  try {
+    require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs' } });
+    require(['vs/editor/editor.main'], function() {
+      const container = document.getElementById('monaco-container');
+      const ta = document.getElementById('code-textarea');
+      const initCode = ta ? ta.value : DEFAULT_CODE;
 
-        editor = monaco.editor.create(container, {
-          value: initCode,
-          language: 'systemverilog',
-          theme: 'vs-dark',
-          automaticLayout: true,
-          fontSize: 13,
-          fontFamily: "'JetBrains Mono', Consolas, monospace",
-          minimap: { enabled: false }
-        });
-
-        editor.onDidChangeModelContent(() => {
-          setStatus('active', 'Editing…');
-          clearTimeout(debounceTimer);
-          debounceTimer = setTimeout(runAnalysis, 1200);
-        });
+      editor = monaco.editor.create(container, {
+        value: initCode,
+        language: 'systemverilog',
+        theme: 'vs-dark',
+        automaticLayout: true,
+        fontSize: 13,
+        fontFamily: "'JetBrains Mono', Consolas, monospace",
+        minimap: { enabled: false }
       });
-    } catch(e) {
-      console.warn("Monaco init skipped, using built-in editor:", e);
-    }
-  };
-  script.onerror = () => {
-    console.warn("Monaco CDN unavailable, using built-in editor");
-  };
-  document.head.appendChild(script);
+
+      // Only hide textarea AFTER Monaco editor is confirmed created
+      if (ta) ta.style.display = 'none';
+
+      editor.onDidChangeModelContent(() => {
+        setStatus('active', 'Editing…');
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(runAnalysis, 1200);
+      });
+    });
+  } catch(e) {
+    console.warn("Monaco initialization fallback:", e);
+  }
 }
 
-// Run immediately on page load
-fetchSamplesList();
-runAnalysis();
-loadMonacoAsync();
+// Safe init: run after DOM is fully ready
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init();
+}
 
-// Switch Dashboard Tabs
+function init() {
+  fetchSamplesList();
+  runAnalysis();
+  // Delay Monaco load so the loader script has time to register
+  setTimeout(loadMonacoAsync, 300);
+}
+
 function switchTab(tabId) {
-  document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.classList.remove('active', 'copper-trace-active');
+    btn.style.color = '';
+  });
   document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
-  if (event && event.target) event.target.classList.add('active');
-  document.getElementById(tabId).classList.add('active');
+
+  // Match button by exact tabId string in onclick attribute
+  const targetBtn = Array.from(document.querySelectorAll('.tab-btn')).find(b => {
+    const oc = b.getAttribute('onclick') || '';
+    return oc.includes(`'${tabId}'`) || oc.includes(`"${tabId}"`);
+  });
+  if (targetBtn) {
+    targetBtn.classList.add('active', 'copper-trace-active');
+  }
+
+  const pane = document.getElementById(tabId);
+  if (pane) pane.classList.add('active');
 }
 
-// Fetch Sample Files list
 async function fetchSamplesList() {
   try {
     const res = await fetch(`${API_BASE}/samples`);
@@ -639,7 +680,6 @@ async function fetchSamplesList() {
   }
 }
 
-// Load a Sample Design into Editor
 async function loadSample(filename) {
   if (!filename) return;
   try {
@@ -656,7 +696,6 @@ async function loadSample(filename) {
   }
 }
 
-// Handle File Upload
 function handleFileUpload(e) {
   const file = e.target.files[0];
   if (!file) return;
@@ -669,7 +708,6 @@ function handleFileUpload(e) {
   reader.readAsText(file);
 }
 
-// Run Full Analysis Pipeline
 function runNow() { clearTimeout(debounceTimer); runAnalysis(); }
 
 async function runAnalysis() {
@@ -707,7 +745,6 @@ async function runAnalysis() {
   }
 }
 
-// Update UI Dashboard Components
 function updateUI(d) {
   document.getElementById('module-info').textContent = `Module: ${d.module_name || 'unknown'}`;
 
@@ -719,9 +756,9 @@ function updateUI(d) {
   document.getElementById('k-cells').textContent = synth.total_cells !== undefined ? synth.total_cells : '—';
   
   const pt = d.power_timing || {};
-  document.getElementById('k-delay').textContent = pt.critical_path_ps ? `${pt.critical_path_ps} ps` : '—';
-  document.getElementById('k-power').textContent = pt.total_power_uw ? `${pt.total_power_uw} μW` : '—';
-  document.getElementById('k-area').textContent = pt.total_area_um2 ? `${pt.total_area_um2} μm²` : '—';
+  document.getElementById('k-delay').textContent = pt.critical_path_ps ? `${pt.critical_path_ps}` : '—';
+  document.getElementById('k-power').textContent = pt.total_power_uw ? `${pt.total_power_uw}` : '—';
+  document.getElementById('k-area').textContent = pt.total_area_um2 ? `${pt.total_area_um2}` : '—';
 
   renderGateChart(synth.gates || {});
   renderGateTable(synth.gates || {});
@@ -730,14 +767,14 @@ function updateUI(d) {
   document.getElementById('bug-prob-val').textContent = `${bugProb}%`;
   const bugBadge = document.getElementById('bug-prob-badge');
   if (bugProb > 50) {
-    bugBadge.textContent = 'HIGH BUG RISK';
-    bugBadge.style.color = '#ef4444'; bugBadge.style.borderColor = '#ef4444'; bugBadge.style.background = '#250a0a';
+    bugBadge.textContent = 'HIGH RISK';
+    bugBadge.className = 'bg-error/30 text-error border border-error px-3 py-1 rounded-full text-xs font-bold font-mono';
   } else if (bugProb > 20) {
     bugBadge.textContent = 'MODERATE RISK';
-    bugBadge.style.color = '#f59e0b'; bugBadge.style.borderColor = '#f59e0b'; bugBadge.style.background = '#251a0a';
+    bugBadge.className = 'bg-primary-container/30 text-primary border border-primary px-3 py-1 rounded-full text-xs font-bold font-mono';
   } else {
     bugBadge.textContent = 'LOW RISK';
-    bugBadge.style.color = '#14b8a6'; bugBadge.style.borderColor = '#14b8a6'; bugBadge.style.background = '#09241b';
+    bugBadge.className = 'bg-surface-container text-secondary-container border border-secondary-container px-3 py-1 rounded-full text-xs font-bold font-mono';
   }
 
   renderLintItems(d.lint_warnings || []);
@@ -770,7 +807,7 @@ function updateUI(d) {
   const recs = qs.recommendations || [];
   document.getElementById('q-recs-box').innerHTML = recs.length 
     ? recs.map(r => `<div>▶ ${r}</div>`).join('')
-    : '✓ Golden RTL: No recommendations needed! Code quality is excellent.';
+    : '✓ Golden RTL: No recommendations needed! Code quality is golden.';
 
   document.getElementById('llm-box').textContent = d.llm_explanation || '(LLM analysis skipped)';
 
@@ -808,12 +845,11 @@ function updateUI(d) {
   document.getElementById('report-text-box').textContent = d.report_text || '';
 }
 
-// SVG Gate Chart Renderer
 function renderGateChart(gates) {
   const container = document.getElementById('gate-chart-container');
   const entries = Object.entries(gates).sort((a,b) => b[1]-a[1]).slice(0, 15);
   if (!entries.length) {
-    container.innerHTML = '<div style="color:#4d7c66;text-align:center;padding:40px;">No synthesized gates available</div>';
+    container.innerHTML = '<div class="text-outline text-xs text-center py-8">No synthesized gates available</div>';
     return;
   }
 
@@ -822,36 +858,35 @@ function renderGateChart(gates) {
   const H = entries.length * (BAR_H + GAP) + PB + 20;
 
   const COLORS = {
-    '$_DFF_P_':'#14b8a6','$_DFF_N_':'#14b8a6',
-    '$_AND_':'#3b82f6','$_NAND_':'#3b82f6','$_OR_':'#8b5cf6','$_NOR_':'#8b5cf6',
-    '$_XOR_':'#f59e0b','$_XNOR_':'#f59e0b','$_NOT_':'#10b981','$_BUF_':'#10b981',
-    '$_MUX_':'#ef4444','$_AOI3_':'#f97316'
+    '$_DFF_P_':'#00f4fe','$_DFF_N_':'#00f4fe',
+    '$_AND_':'#ffb77b','$_NAND_':'#ffb77b','$_OR_':'#63f7ff','$_NOR_':'#63f7ff',
+    '$_XOR_':'#ffdcc2','$_XNOR_':'#ffdcc2','$_NOT_':'#88919f','$_BUF_':'#88919f',
+    '$_MUX_':'#ffb4ab','$_AOI3_':'#c8803f'
   };
 
   let bars = entries.map(([name, count], i) => {
     const y = 20 + i*(BAR_H+GAP);
     const bw = Math.max(4, Math.round((count/maxVal)*(W-PL-30)));
-    const color = COLORS[name] || '#4d7c66';
+    const color = COLORS[name] || '#bec7d6';
     const shortName = name.replace(/^\$_/,'').replace(/_$/,'');
     return `
-      <text x="${PL-8}" y="${y+13}" fill="#8ea499" font-size="11" text-anchor="end" font-family="JetBrains Mono,Consolas,monospace">${shortName}</text>
+      <text x="${PL-8}" y="${y+13}" fill="#d8c3b4" font-size="11" text-anchor="end" font-family="JetBrains Mono,Consolas,monospace">${shortName}</text>
       <rect x="${PL}" y="${y}" width="${bw}" height="${BAR_H}" fill="${color}" rx="3" opacity="0.9"/>
-      <text x="${PL+bw+6}" y="${y+13}" fill="#c0d0c5" font-size="11" font-family="JetBrains Mono,Consolas,monospace">${count}</text>`;
+      <text x="${PL+bw+6}" y="${y+13}" fill="#e3e2e8" font-size="11" font-family="JetBrains Mono,Consolas,monospace">${count}</text>`;
   }).join('');
 
   container.innerHTML = `
     <svg width="100%" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
-      <rect width="${W}" height="${H}" fill="#070c0a"/>
+      <rect width="${W}" height="${H}" fill="#0d0e12"/>
       ${bars}
     </svg>`;
 }
 
-// Gate Table Renderer
 function renderGateTable(gates) {
   const tbody = document.getElementById('gate-table-body');
   const entries = Object.entries(gates).sort((a,b) => b[1]-a[1]);
   if (!entries.length) {
-    tbody.innerHTML = '<tr><td colspan="3" style="color:#4d7c66;text-align:center">No gates</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="3" class="text-center text-outline">No gates</td></tr>';
     return;
   }
   tbody.innerHTML = entries.map(([g, c]) => {
@@ -863,7 +898,6 @@ function renderGateTable(gates) {
   }).join('');
 }
 
-// Lint Renderer
 function renderLintItems(warnings) {
   const container = document.getElementById('custom-lint-list');
   if (!warnings.length) {
@@ -877,7 +911,6 @@ function renderLintItems(warnings) {
   }).join('');
 }
 
-// Run Side-by-Side Comparison
 async function runComparison() {
   const targetFile = document.getElementById('compare-select').value;
   if (!targetFile) return;
@@ -915,17 +948,17 @@ function renderCompareTable(base, target) {
   tbody.innerHTML = metrics.map(([label, bVal, tVal]) => {
     const diff = tVal - bVal;
     const diffStr = diff > 0 ? `+${diff.toFixed(1)}` : diff.toFixed(1);
-    const color = diff === 0 ? '#4d7c66' : label.includes('Score') || label.includes('Frequency') ? (diff > 0 ? '#10b981' : '#ef4444') : (diff > 0 ? '#ef4444' : '#10b981');
+    const color = diff === 0 ? '#bec7d6' : label.includes('Score') || label.includes('Frequency') ? (diff > 0 ? '#63f7ff' : '#ffb4ab') : (diff > 0 ? '#ffb4ab' : '#63f7ff');
     return `<tr><td>${label}</td><td>${bVal}</td><td>${tVal}</td><td style="color:${color};font-weight:600">${diffStr}</td></tr>`;
   }).join('');
 }
 
-// Copy & Download Report
 function copyReport() {
   const text = document.getElementById('report-text-box').textContent;
   navigator.clipboard.writeText(text);
   alert("Report copied to clipboard!");
 }
+
 function downloadReport() {
   const text = document.getElementById('report-text-box').textContent;
   const blob = new Blob([text], { type: 'text/plain' });
@@ -935,11 +968,10 @@ function downloadReport() {
   a.click();
 }
 
-// Status Helper
 function setStatus(state, msg) {
   const dot = document.getElementById('status-dot');
   document.getElementById('status-text').textContent = msg;
-  dot.className = `dot ${state === 'active' ? 'active' : state === 'error' ? 'error' : ''}`;
+  if (dot) dot.className = `dot ${state === 'active' ? 'active' : state === 'error' ? 'error' : ''}`;
 }
 </script>
 </body>
