@@ -3,309 +3,834 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>EDA Assistant · Live Verilog IDE</title>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+<title>EDA Assistant · Unified RTL Intelligence Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet"/>
 <style>
-*{box-sizing:border-box;margin:0;padding:0}
-body{background:#060a08;color:#c0d0c5;font-family:'Inter',sans-serif;height:100vh;display:flex;flex-direction:column;overflow:hidden}
-#header{background:#0b1410;border-bottom:1px solid #1a3025;padding:10px 20px;display:flex;align-items:center;gap:16px;flex-shrink:0}
-#header .logo{color:#14b8a6;font-size:1.4rem}
-#header h1{font-size:0.95rem;font-weight:600;color:#eaf3ee}
-#header .sub{font-size:0.72rem;color:#4d7c66;font-family:'JetBrains Mono',monospace}
-#header .badge{margin-left:auto;background:#14b8a6;color:#060a08;font-size:0.65rem;font-weight:700;padding:3px 10px;border-radius:20px;letter-spacing:0.05em}
-#status-bar{background:#0a1208;border-bottom:1px solid #142018;padding:6px 20px;font-size:0.72rem;font-family:'JetBrains Mono',monospace;color:#4d7c66;display:flex;align-items:center;gap:20px;flex-shrink:0}
-#status-bar .dot{width:8px;height:8px;border-radius:50%;background:#4d7c66;display:inline-block;transition:background 0.3s}
-#status-bar .dot.active{background:#14b8a6;box-shadow:0 0 6px #14b8a6}
-#status-bar .dot.error{background:#ef4444}
-#main{display:flex;flex:1;overflow:hidden}
-#editor-pane{width:50%;display:flex;flex-direction:column;border-right:1px solid #1a3025}
-#editor-toolbar{background:#0b1410;border-bottom:1px solid #1a3025;padding:8px 14px;display:flex;align-items:center;gap:10px;font-size:0.72rem;color:#4d7c66;flex-shrink:0}
-#editor-toolbar span{font-family:'JetBrains Mono',monospace}
-#run-btn{margin-left:auto;background:#14b8a6;color:#060a08;border:none;padding:5px 14px;border-radius:4px;font-weight:700;font-size:0.72rem;cursor:pointer;transition:background 0.2s}
-#run-btn:hover{background:#0d9488}
-#monaco-container{flex:1;overflow:hidden}
-#right-pane{width:50%;display:flex;flex-direction:column;overflow:hidden}
-#kpi-strip{background:#0b1410;border-bottom:1px solid #1a3025;padding:10px 16px;display:flex;gap:16px;flex-wrap:wrap;flex-shrink:0}
-.kpi{text-align:center;min-width:90px}
-.kpi .val{font-size:1.25rem;font-weight:700;color:#14b8a6;font-family:'JetBrains Mono',monospace}
-.kpi .delta{font-size:0.6rem;margin-top:1px}
-.delta.up{color:#ef4444}.delta.down{color:#22c55e}.delta.same{color:#4d7c66}
-.kpi .lbl{font-size:0.62rem;color:#4d7c66;margin-top:2px}
-#schematic-pane{flex:1;position:relative;overflow:hidden}
-#schematic-pane iframe{width:100%;height:100%;border:none;background:#070c0a}
-#schematic-placeholder{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;color:#1a3025;font-size:0.85rem;gap:12px}
-#schematic-placeholder .icon{font-size:3rem;color:#14b8a6;opacity:0.3}
-#lint-panel{background:#070c0a;border-top:1px solid #1a3025;max-height:150px;overflow-y:auto;flex-shrink:0}
-.lint-row{padding:5px 14px;font-size:0.72rem;font-family:'JetBrains Mono',monospace;border-bottom:1px solid #0d1a12;display:flex;gap:8px;align-items:flex-start}
-.lint-row.warn{border-left:2px solid #f59e0b}.lint-row.err{border-left:2px solid #ef4444}.lint-row.ok{border-left:2px solid #22c55e;color:#4d7c66}
-.lint-badge{font-size:0.6rem;font-weight:700;padding:1px 6px;border-radius:3px;flex-shrink:0;margin-top:1px}
-.warn .lint-badge{background:#f59e0b22;color:#f59e0b}.err .lint-badge{background:#ef444422;color:#ef4444}.ok .lint-badge{background:#22c55e22;color:#22c55e}
-::-webkit-scrollbar{width:6px;height:6px}::-webkit-scrollbar-track{background:#070c0a}::-webkit-scrollbar-thumb{background:#1a3025;border-radius:3px}
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: #060a08;
+  color: #c0d0c5;
+  font-family: 'Inter', sans-serif;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* --- Header / Brand Bar --- */
+#header {
+  background: #0b1410;
+  border-bottom: 1px solid #1a3025;
+  padding: 8px 16px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-shrink: 0;
+  height: 52px;
+}
+#header .hex-logo {
+  width: 34px; height: 34px;
+  background: #14b8a6;
+  clip-path: polygon(50% 0%, 100% 25%, 100% 75%, 50% 100%, 0% 75%, 0% 25%);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 1rem; color: #060a08; font-weight: 800;
+}
+#header .title-box { display: flex; flex-direction: column; }
+#header h1 { font-size: 0.95rem; font-weight: 700; color: #eaf3ee; letter-spacing: -0.3px; }
+#header .sub { font-size: 0.65rem; color: #4d7c66; font-family: 'JetBrains Mono', monospace; text-transform: uppercase; letter-spacing: 0.05em; }
+
+/* Top controls */
+.top-controls { display: flex; align-items: center; gap: 10px; margin-left: auto; }
+select.styled-select, button.styled-btn {
+  background: #111e17;
+  border: 1px solid #1a3025;
+  color: #c0d0c5;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  padding: 5px 10px;
+  border-radius: 5px;
+  outline: none;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+select.styled-select:hover, button.styled-btn:hover { border-color: #14b8a6; color: #eaf3ee; }
+button.btn-accent { background: #14b8a6; color: #060a08; font-weight: 700; border: none; }
+button.btn-accent:hover { background: #0d9488; }
+
+.toggle-label { font-size: 0.7rem; color: #6d8c7c; display: flex; align-items: center; gap: 4px; cursor: pointer; }
+.toggle-label input { accent-color: #14b8a6; }
+
+/* --- Status bar --- */
+#status-bar {
+  background: #080e0b;
+  border-bottom: 1px solid #14241c;
+  padding: 4px 16px;
+  font-size: 0.7rem;
+  font-family: 'JetBrains Mono', monospace;
+  color: #4d7c66;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-shrink: 0;
+  height: 26px;
+}
+#status-bar .dot { width: 7px; height: 7px; border-radius: 50%; background: #4d7c66; display: inline-block; }
+#status-bar .dot.active { background: #14b8a6; box-shadow: 0 0 6px #14b8a6; }
+#status-bar .dot.error { background: #ef4444; }
+
+/* --- Main Split Workspace --- */
+#main { display: flex; flex: 1; overflow: hidden; }
+
+/* Left Pane: Editor */
+#editor-pane { width: 45%; display: flex; flex-direction: column; border-right: 1px solid #1a3025; }
+#editor-toolbar {
+  background: #0b1410;
+  border-bottom: 1px solid #1a3025;
+  padding: 6px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.72rem;
+  color: #4d7c66;
+  font-family: 'JetBrains Mono', monospace;
+  flex-shrink: 0;
+  height: 36px;
+}
+#monaco-container { flex: 1; overflow: hidden; }
+
+/* Right Pane: Analytics Dashboard */
+#right-pane { width: 55%; display: flex; flex-direction: column; overflow: hidden; background: #070c0a; }
+
+/* KPI Strip (6-Grid) */
+#kpi-strip {
+  background: #0b1410;
+  border-bottom: 1px solid #1a3025;
+  padding: 8px 12px;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 8px;
+  flex-shrink: 0;
+}
+.kpi-card {
+  background: #070d0a;
+  border: 1px solid #14241c;
+  border-radius: 6px;
+  padding: 6px 8px;
+  text-align: center;
+  position: relative;
+}
+.kpi-card::after { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: #14b8a6; opacity: 0.6; }
+.kpi-val { font-size: 1.1rem; font-weight: 700; color: #14b8a6; font-family: 'JetBrains Mono', monospace; line-height: 1.1; }
+.kpi-lbl { font-size: 0.6rem; color: #4d7c66; text-transform: uppercase; letter-spacing: 0.05em; margin-top: 3px; }
+
+/* Navigation Tabs */
+#tab-nav {
+  display: flex;
+  background: #080f0b;
+  border-bottom: 1px solid #1a3025;
+  padding: 0 8px;
+  gap: 2px;
+  flex-shrink: 0;
+  overflow-x: auto;
+}
+.tab-btn {
+  background: transparent;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: #4d7c66;
+  padding: 8px 12px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+.tab-btn:hover { color: #8ea499; }
+.tab-btn.active { color: #14b8a6; border-bottom-color: #14b8a6; font-weight: 600; }
+
+/* Tab Body Content */
+#tab-content { flex: 1; overflow-y: auto; padding: 14px; position: relative; }
+.tab-pane { display: none; }
+.tab-pane.active { display: block; }
+
+/* Custom Styling inside tabs */
+.card-section {
+  background: #0b1410;
+  border: 1px solid #1a3025;
+  border-radius: 8px;
+  padding: 14px;
+  margin-bottom: 12px;
+}
+.sec-title {
+  font-size: 0.68rem;
+  font-weight: 700;
+  color: #4d7c66;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  margin-bottom: 10px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.sec-title::after { content: ''; flex: 1; height: 1px; background: #1a3025; }
+
+/* Lint Items */
+.lint-item {
+  display: flex; align-items: flex-start; gap: 8px;
+  padding: 7px 10px; border-radius: 5px; margin-bottom: 5px;
+  font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; line-height: 1.4;
+}
+.lint-item.warn  { background: #1a150c; border: 1px solid #3d2d10; color: #f59e0b; }
+.lint-item.error { background: #1e0e0e; border: 1px solid #4a1818; color: #f87171; }
+.lint-item.ok    { background: #081a11; border: 1px solid #144026; color: #10b981; }
+.lint-item .badge { font-size: 0.58rem; padding: 1px 5px; border-radius: 3px; font-weight: 700; flex-shrink: 0; }
+.lint-item.warn .badge  { background: #3d2d10; color: #f59e0b; }
+.lint-item.error .badge { background: #4a1818; color: #f87171; }
+.lint-item.ok .badge    { background: #144026; color: #10b981; }
+
+/* Progress bars */
+.prog-row { margin-bottom: 8px; }
+.prog-lbl { display: flex; justify-content: space-between; font-size: 0.7rem; color: #8ea499; margin-bottom: 3px; }
+.prog-bg { background: #111d17; border-radius: 3px; height: 6px; overflow: hidden; }
+.prog-fill { height: 100%; background: linear-gradient(90deg, #10b981, #14b8a6); border-radius: 3px; }
+
+/* Tables */
+table.data-table { width: 100%; border-collapse: collapse; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; }
+table.data-table th, table.data-table td { padding: 6px 10px; text-align: left; border-bottom: 1px solid #1a3025; }
+table.data-table th { color: #4d7c66; font-size: 0.65rem; text-transform: uppercase; background: #080f0b; }
+
+/* Code box */
+pre.code-block { background: #070c0a; border: 1px solid #1a3025; border-radius: 6px; padding: 12px; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; color: #8fd4b2; white-space: pre-wrap; overflow-x: auto; }
+
+/* Scrollbars */
+::-webkit-scrollbar { width: 5px; height: 5px; }
+::-webkit-scrollbar-track { background: #060a08; }
+::-webkit-scrollbar-thumb { background: #1a3025; border-radius: 3px; }
 </style>
 </head>
 <body>
+
+<!-- Header -->
 <div id="header">
-  <div class="logo">⬡</div>
-  <div>
-    <div><h1>EDA Assistant · Live Verilog IDE</h1></div>
-    <div class="sub">Monaco Editor · DigitalJS Schematic · Real-time KPIs</div>
+  <div class="hex-logo">⬡</div>
+  <div class="title-box">
+    <h1>EDA Assistant</h1>
+    <div class="sub">Unified RTL Intelligence & Verification Platform</div>
   </div>
-  <div class="badge">LIVE MODE</div>
+
+  <div class="top-controls">
+    <select id="sample-select" class="styled-select" onchange="loadSample(this.value)">
+      <option value="">📂 Select Sample Design...</option>
+    </select>
+    <label for="file-upload" class="styled-btn" style="display:inline-block;">📁 Upload .v</label>
+    <input type="file" id="file-upload" accept=".v,.sv" style="display:none" onchange="handleFileUpload(event)"/>
+
+    <label class="toggle-label"><input type="checkbox" id="toggle-llm" checked/> 🧠 Gemini</label>
+    <label class="toggle-label"><input type="checkbox" id="toggle-tb" checked/> 🧪 Testbench</label>
+
+    <button class="styled-btn btn-accent" onclick="runNow()">🚀 Run Analysis</button>
+  </div>
 </div>
 
+<!-- Status Bar -->
 <div id="status-bar">
-  <span><span class="dot" id="status-dot"></span> <span id="status-text">Ready — edit Verilog to begin analysis</span></span>
-  <span id="model-lbl" style="color:#4d7c66"></span>
+  <span><span class="dot" id="status-dot"></span> <span id="status-text">Ready — select a sample or paste Verilog code to analyze</span></span>
+  <span id="module-info" style="margin-left:auto;color:#4d7c66">Module: —</span>
 </div>
 
+<!-- Main Split View -->
 <div id="main">
   <!-- Left: Monaco Editor -->
   <div id="editor-pane">
     <div id="editor-toolbar">
-      <span>📝 verilog_design.v</span>
-      <button id="run-btn" onclick="runNow()">▶ Analyze</button>
+      <span id="file-name-lbl">📝 verilog_design.v</span>
+      <span style="color:#4d7c66;font-size:0.65rem">Auto-Analysis Debounced</span>
     </div>
     <div id="monaco-container"></div>
   </div>
 
-  <!-- Right: KPIs + Schematic + Lint -->
+  <!-- Right: Unified Intelligence Platform -->
   <div id="right-pane">
+    <!-- Top 6-KPI Strip -->
     <div id="kpi-strip">
-      <div class="kpi"><div class="val" id="k-cells">—</div><div class="delta same" id="d-cells"></div><div class="lbl">Total Cells</div></div>
-      <div class="kpi"><div class="val" id="k-area">—</div><div class="delta same" id="d-area"></div><div class="lbl">Area (μm²)</div></div>
-      <div class="kpi"><div class="val" id="k-power">—</div><div class="delta same" id="d-power"></div><div class="lbl">Power (μW)</div></div>
-      <div class="kpi"><div class="val" id="k-freq">—</div><div class="delta same" id="d-freq"></div><div class="lbl">Max Freq (MHz)</div></div>
-      <div class="kpi"><div class="val" id="k-cc">—</div><div class="delta same" id="d-cc"></div><div class="lbl">~Cyclomatic</div></div>
-      <div class="kpi"><div class="val" id="k-regs">—</div><div class="delta same" id="d-regs"></div><div class="lbl">Reg Bits</div></div>
-    </div>
-
-    <div id="schematic-pane">
-      <div id="schematic-placeholder">
-        <div class="icon">⬡</div>
-        <div>Interactive schematic will appear after synthesis</div>
-        <div style="font-size:0.65rem;color:#14b8a630">Powered by DigitalJS · Yosys JSON netlist</div>
+      <div class="kpi-card">
+        <div class="kpi-val" id="k-grade">—</div>
+        <div class="kpi-lbl">RTL Grade</div>
       </div>
-      <iframe id="schematic-frame" style="display:none"></iframe>
+      <div class="kpi-card">
+        <div class="kpi-val" id="k-lint" style="color:#f59e0b">—</div>
+        <div class="kpi-lbl">Lint Issues</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-val" id="k-cells">—</div>
+        <div class="kpi-lbl">Total Cells</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-val" id="k-delay" style="color:#3b82f6">—</div>
+        <div class="kpi-lbl">Critical Path</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-val" id="k-power">—</div>
+        <div class="kpi-lbl">Total Power</div>
+      </div>
+      <div class="kpi-card">
+        <div class="kpi-val" id="k-area" style="color:#eab308">—</div>
+        <div class="kpi-lbl">Silicon Area</div>
+      </div>
     </div>
 
-    <div id="lint-panel">
-      <div class="lint-row ok"><span class="lint-badge">IDLE</span><span>No issues detected yet.</span></div>
+    <!-- Navigation Tabs -->
+    <div id="tab-nav">
+      <button class="tab-btn active" onclick="switchTab('t-synth')">⬡ Gate Synthesis</button>
+      <button class="tab-btn" onclick="switchTab('t-lint')">⚡ Lint & ML Bug Risk</button>
+      <button class="tab-btn" onclick="switchTab('t-quality')">📋 RTL Quality</button>
+      <button class="tab-btn" onclick="switchTab('t-ppa')">🔌 45nm PPA</button>
+      <button class="tab-btn" onclick="switchTab('t-metrics')">📊 Complexity</button>
+      <button class="tab-btn" onclick="switchTab('t-tb')">🧪 Testbench & Sim</button>
+      <button class="tab-btn" onclick="switchTab('t-compare')">⚖️ Design Comparison</button>
+      <button class="tab-btn" onclick="switchTab('t-report')">📄 Report & Export</button>
+    </div>
+
+    <!-- Tab Content Container -->
+    <div id="tab-content">
+
+      <!-- TAB 1: SYNTHESIS & GATES -->
+      <div id="t-synth" class="tab-pane active">
+        <div class="card-section">
+          <div class="sec-title">Synthesized Gate Distribution (SVG Chart)</div>
+          <div id="gate-chart-container" style="min-height:220px;">
+            <div style="color:#4d7c66;text-align:center;padding:40px;font-size:0.8rem">Run analysis to generate gate chart</div>
+          </div>
+        </div>
+        <div class="card-section">
+          <div class="sec-title">Yosys Technology-Independent Netlist Summary</div>
+          <table class="data-table">
+            <thead><tr><th>Gate Cell Type</th><th>Count</th><th>Category</th></tr></thead>
+            <tbody id="gate-table-body">
+              <tr><td colspan="3" style="color:#4d7c66;text-align:center">No synthesis data</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- TAB 2: LINT & ML BUG RISK -->
+      <div id="t-lint" class="tab-pane">
+        <div class="card-section" id="ml-bug-card" style="border-left: 4px solid #14b8a6;">
+          <div class="sec-title">Predictive ML Pattern Anomaly Classifier</div>
+          <div style="display:flex;align-items:center;justify-content:space-between">
+            <div>
+              <div style="font-size:0.75rem;color:#8ea499">RandomForest Anomaly Score</div>
+              <div id="bug-prob-val" style="font-size:1.8rem;font-weight:700;color:#14b8a6;font-family:'JetBrains Mono',monospace">0.0%</div>
+            </div>
+            <div id="bug-prob-badge" style="background:#09241b;border:1px solid #14b8a6;color:#14b8a6;padding:4px 12px;border-radius:20px;font-size:0.72rem;font-weight:700;">
+              LOW RISK
+            </div>
+          </div>
+        </div>
+        <div class="card-section">
+          <div class="sec-title">Custom 10-Rule AST Static Linter</div>
+          <div id="custom-lint-list">
+            <div class="lint-item ok"><span class="badge">CLEAN</span>No lint issues detected.</div>
+          </div>
+        </div>
+        <div class="card-section">
+          <div class="sec-title">Verilator Linter Direct Output</div>
+          <pre id="verilator-out-box" class="code-block" style="font-size:0.7rem;max-height:160px;overflow-y:auto;">Verilator output clean.</pre>
+        </div>
+      </div>
+
+      <!-- TAB 3: RTL QUALITY SCORECARD -->
+      <div id="t-quality" class="tab-pane">
+        <div class="card-section" style="display:flex;gap:20px;align-items:center">
+          <div style="text-align:center;background:#081510;border:1px solid #1a3025;padding:16px;border-radius:8px;min-width:110px">
+            <div style="font-size:0.65rem;color:#4d7c66">LETTER GRADE</div>
+            <div id="q-grade-badge" style="font-size:3rem;font-weight:800;color:#14b8a6;font-family:'JetBrains Mono',monospace">A+</div>
+            <div id="q-total-score" style="font-size:0.85rem;color:#eaf3ee;font-weight:600">100 / 100</div>
+          </div>
+          <div style="flex:1" id="q-breakdown-box">
+            <!-- Score factors populated by JS -->
+          </div>
+        </div>
+        <div class="card-section">
+          <div class="sec-title">VLSI Optimization Path & Recommendations</div>
+          <div id="q-recs-box" style="font-size:0.78rem;line-height:1.6;color:#c0d0c5">
+            No optimization warnings needed. Code quality is golden!
+          </div>
+        </div>
+        <div class="card-section">
+          <div class="sec-title">Gemini RTL Architecture Explanation</div>
+          <div id="llm-box" style="font-size:0.78rem;line-height:1.6;color:#8fd4b2;background:#070c0a;padding:12px;border-radius:6px;border:1px solid #1a3025;">
+            LLM explanation will appear here when enabled.
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 4: 45nm PPA POWER & TIMING -->
+      <div id="t-ppa" class="tab-pane">
+        <div class="card-section" style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px">
+          <div>
+            <div style="font-size:0.68rem;color:#4d7c66;text-transform:uppercase">Estimated Silicon Area</div>
+            <div id="ppa-area" style="font-size:1.6rem;font-weight:700;color:#eab308;font-family:'JetBrains Mono',monospace">0.0 μm²</div>
+            <div style="font-size:0.68rem;color:#6d8c7c;margin-top:4px">Standard cell active gate footprint</div>
+          </div>
+          <div>
+            <div style="font-size:0.68rem;color:#4d7c66;text-transform:uppercase">Total Power @100MHz</div>
+            <div id="ppa-power" style="font-size:1.6rem;font-weight:700;color:#14b8a6;font-family:'JetBrains Mono',monospace">0.0 μW</div>
+            <div id="ppa-power-sub" style="font-size:0.68rem;color:#6d8c7c;margin-top:4px">Leakage: 0 nW · Dynamic: 0 μW</div>
+          </div>
+          <div>
+            <div style="font-size:0.68rem;color:#4d7c66;text-transform:uppercase">Critical Path Delay</div>
+            <div id="ppa-path" style="font-size:1.6rem;font-weight:700;color:#3b82f6;font-family:'JetBrains Mono',monospace">0 ps</div>
+            <div id="ppa-stages" style="font-size:0.68rem;color:#6d8c7c;margin-top:4px">0 logic stages</div>
+          </div>
+          <div>
+            <div style="font-size:0.68rem;color:#4d7c66;text-transform:uppercase">Maximum Clock Frequency</div>
+            <div id="ppa-fmax" style="font-size:1.6rem;font-weight:700;color:#ef4444;font-family:'JetBrains Mono',monospace">0 MHz</div>
+            <div style="font-size:0.68rem;color:#6d8c7c;margin-top:4px">45nm CMOS cell library estimate</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- TAB 5: COMPLEXITY ANALYTICS -->
+      <div id="t-metrics" class="tab-pane">
+        <div class="card-section" style="display:grid;grid-template-columns:repeat(2,1fr);gap:12px">
+          <div>
+            <div style="font-size:0.68rem;color:#4d7c66">McCabe Cyclomatic Complexity</div>
+            <div id="cx-cc" style="font-size:2rem;font-weight:700;color:#14b8a6;font-family:'JetBrains Mono',monospace">0</div>
+            <div style="font-size:0.68rem;color:#6d8c7c;margin-top:4px">1 + if_statements + case_branches</div>
+          </div>
+          <div>
+            <div style="font-size:0.68rem;color:#4d7c66">Register Storage Allocation</div>
+            <div id="cx-regs" style="font-size:2rem;font-weight:700;color:#3b82f6;font-family:'JetBrains Mono',monospace">0 bits</div>
+            <div style="font-size:0.68rem;color:#6d8c7c;margin-top:4px">Total Flip-Flop/Register capacity</div>
+          </div>
+        </div>
+        <div class="card-section">
+          <div class="sec-title">Structural Signals & Control Density</div>
+          <table class="data-table">
+            <thead><tr><th>Metric Name</th><th>Value</th></tr></thead>
+            <tbody id="cx-table-body">
+              <!-- Populated by JS -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- TAB 6: TESTBENCH & SIMULATION -->
+      <div id="t-tb" class="tab-pane">
+        <div class="card-section">
+          <div class="sec-title">Iverilog Testbench Compilation Status</div>
+          <div id="tb-status-badge" class="lint-item ok"><span class="badge">COMPILED</span>Testbench compiles cleanly</div>
+        </div>
+        <div class="card-section">
+          <div class="sec-title">Auto-Generated Verilog Testbench</div>
+          <pre id="tb-code-box" class="code-block" style="max-height:200px;overflow-y:auto;">// Generated testbench will appear here</pre>
+        </div>
+        <div class="card-section">
+          <div class="sec-title">VVP Simulation stdout Log</div>
+          <pre id="tb-sim-box" class="code-block" style="max-height:160px;overflow-y:auto;">// Simulation output will appear here</pre>
+        </div>
+      </div>
+
+      <!-- TAB 7: DESIGN COMPARISON -->
+      <div id="t-compare" class="tab-pane">
+        <div class="card-section" style="display:flex;gap:12px;align-items:center">
+          <div style="flex:1">
+            <label style="font-size:0.7rem;color:#4d7c66;display:block;margin-bottom:4px">Select Comparison Target Sample</label>
+            <select id="compare-select" class="styled-select" style="width:100%">
+              <option value="">Choose target design...</option>
+            </select>
+          </div>
+          <button class="styled-btn btn-accent" onclick="runComparison()" style="margin-top:16px">⚖️ Compare Designs</button>
+        </div>
+        <div class="card-section">
+          <div class="sec-title">Side-by-Side Design Delta Analysis</div>
+          <table class="data-table">
+            <thead><tr><th>Metric</th><th>Baseline (Current)</th><th>Target</th><th>Delta</th></tr></thead>
+            <tbody id="compare-table-body">
+              <tr><td colspan="4" style="color:#4d7c66;text-align:center">Select a target design and click "Compare Designs"</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- TAB 8: REPORT & EXPORT -->
+      <div id="t-report" class="tab-pane">
+        <div class="card-section">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
+            <div class="sec-title" style="margin-bottom:0">Full Engineering Report</div>
+            <div style="display:flex;gap:8px">
+              <button class="styled-btn" onclick="copyReport()">📋 Copy Report</button>
+              <button class="styled-btn btn-accent" onclick="downloadReport()">⬇ Download .txt</button>
+            </div>
+          </div>
+          <pre id="report-text-box" class="code-block" style="max-height:360px;overflow-y:auto;">// Full report text will appear here</pre>
+        </div>
+      </div>
+
     </div>
   </div>
 </div>
 
-<!-- Monaco Editor via CDN -->
+<!-- Monaco Editor Loader -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/loader.min.js"></script>
 <script>
 const API_BASE = window.location.origin;
-let editor, debounceTimer;
-let prevKpis = null;
+let editor = null;
+let currentReport = null;
+let debounceTimer = null;
 
-// ── Monaco Setup ─────────────────────────────────────────────────────────────
-require.config({ paths: { vs: 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs' } });
-require(['vs/editor/editor.main'], () => {
-  // Register Verilog as a basic language with keyword coloring
-  monaco.languages.register({ id: 'verilog' });
-  monaco.languages.setMonarchTokensProvider('verilog', {
-    keywords: ['module','endmodule','input','output','inout','wire','reg','always','begin','end',
-                'if','else','case','endcase','default','assign','parameter','localparam',
-                'posedge','negedge','initial','for','while','integer','genvar','generate','endgenerate'],
-    tokenizer: {
-      root: [
-        [/\/\/.*$/, 'comment'],
-        [/\/\*/, 'comment', '@comment'],
-        [/"[^"]*"/, 'string'],
-        [/\b\d+('[bBhHdDoO]\w+)?\b/, 'number'],
-        [/\b(module|endmodule|input|output|inout|wire|reg|always|begin|end|if|else|case|endcase|default|assign|parameter|localparam|posedge|negedge|initial|for|while|integer|genvar|generate|endgenerate)\b/, 'keyword'],
-        [/[a-zA-Z_]\w*/, 'identifier'],
-      ],
-      comment: [[/\*\//, 'comment', '@pop'], [/./, 'comment']]
-    }
-  });
-
+// Initialize Monaco Editor & Load Samples list
+require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.44.0/min/vs/loader.min.js/../vs' }});
+require(['vs/editor/editor.main'], function() {
   editor = monaco.editor.create(document.getElementById('monaco-container'), {
-    language: 'verilog',
+    value: `// =========================================================\n// 8-bit Arithmetic Logic Unit (ALU)\n// =========================================================\nmodule alu_8bit (\n    input wire [7:0] a,\n    input wire [7:0] b,\n    input wire [2:0] op,\n    output reg [7:0] result,\n    output reg       zero,\n    output reg       carry\n);\n\n  localparam OP_ADD = 3'b000,\n             OP_SUB = 3'b001,\n             OP_AND = 3'b010,\n             OP_OR  = 3'b011,\n             OP_XOR = 3'b100,\n             OP_NOT = 3'b101,\n             OP_SHL = 3'b110,\n             OP_SHR = 3'b111;\n\n  reg [8:0] temp;\n\n  always @(*) begin\n    temp = 9'b0;\n    carry = 1'b0;\n    case (op)\n      OP_ADD: begin\n        temp   = {1'b0, a} + {1'b0, b};\n        result = temp[7:0];\n        carry  = temp[8];\n      end\n      OP_SUB: begin\n        temp   = {1'b0, a} - {1'b0, b};\n        result = temp[7:0];\n        carry  = temp[8];\n      end\n      OP_AND:  result = a & b;\n      OP_OR:   result = a | b;\n      OP_XOR:  result = a ^ b;\n      OP_NOT:  result = ~a;\n      OP_SHL: begin\n        temp   = {a, 1'b0};\n        result = temp[7:0];\n        carry  = temp[8];\n      end\n      OP_SHR: begin\n        result = a >> 1;\n        carry  = a[0];\n      end\n      default: result = 8'b0;\n    endcase\n    zero = (result == 8'b0);\n  end\n\nendmodule\n`,
+    language: 'systemverilog',
     theme: 'vs-dark',
+    automaticLayout: true,
     fontSize: 13,
     fontFamily: "'JetBrains Mono', monospace",
     minimap: { enabled: false },
-    scrollBeyondLastLine: false,
-    automaticLayout: true,
-    value: `// Paste or type your Verilog module here\n`
+    padding: { top: 10 }
   });
 
   editor.onDidChangeModelContent(() => {
+    setStatus('active', 'Editing…');
     clearTimeout(debounceTimer);
-    setStatus('idle', 'Waiting for typing to stop…');
-    debounceTimer = setTimeout(runAnalysis, 800);
+    debounceTimer = setTimeout(runAnalysis, 1200);
   });
 
-  // Run initial analysis after short delay
-  setTimeout(runAnalysis, 1200);
+  // Initial fetch samples & first analysis
+  fetchSamplesList();
+  runAnalysis();
 });
 
-// ── Analysis ─────────────────────────────────────────────────────────────────
+// Switch Dashboard Tabs
+function switchTab(tabId) {
+  document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  event.target.classList.add('active');
+  document.getElementById(tabId).classList.add('active');
+}
+
+// Fetch Sample Files list
+async function fetchSamplesList() {
+  try {
+    const res = await fetch(`${API_BASE}/samples`);
+    const data = await res.json();
+    const sSelect = document.getElementById('sample-select');
+    const cSelect = document.getElementById('compare-select');
+    
+    (data.samples || []).forEach(f => {
+      const opt = document.createElement('option');
+      opt.value = f; opt.textContent = f;
+      sSelect.appendChild(opt.cloneNode(true));
+      cSelect.appendChild(opt);
+    });
+  } catch(e) {}
+}
+
+// Load a Sample Design into Monaco
+async function loadSample(filename) {
+  if (!filename) return;
+  try {
+    const res = await fetch(`${API_BASE}/sample/${filename}`);
+    const data = await res.json();
+    if (data.code) {
+      editor.setValue(data.code);
+      document.getElementById('file-name-lbl').textContent = `📝 ${filename}`;
+      runAnalysis();
+    }
+  } catch(e) {}
+}
+
+// Handle File Upload
+function handleFileUpload(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(evt) {
+    editor.setValue(evt.target.result);
+    document.getElementById('file-name-lbl').textContent = `📝 ${file.name}`;
+    runAnalysis();
+  };
+  reader.readAsText(file);
+}
+
+// Run Full Analysis Pipeline
 function runNow() { clearTimeout(debounceTimer); runAnalysis(); }
 
 async function runAnalysis() {
   const code = editor.getValue();
-  setStatus('active', 'Analyzing…');
+  if (!code.trim()) return;
+  setStatus('active', 'Analyzing through VLSI pipeline…');
+
+  const useLLM = document.getElementById('toggle-llm').checked;
+  const useTB  = document.getElementById('toggle-tb').checked;
+
   try {
     const res = await fetch(`${API_BASE}/analyze`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ code })
+      body: JSON.stringify({ code, use_llm: useLLM, use_tb: useTB })
     });
     const data = await res.json();
+    currentReport = data;
+
     if (data.error) {
-      setStatus('error', 'Pipeline error — check lint panel');
-      renderLint([`[PIPELINE ERROR] ${data.error.split('\n')[0]}`], '');
+      setStatus('error', 'Analysis failed');
       return;
     }
-    updateKpis(data);
-    renderLint(data.lint_warnings || [], data.verilator_warnings || '');
-    renderSchematic(data.netlist_json);
+
+    updateUI(data);
     setStatus('idle', `Analysis complete · ${new Date().toLocaleTimeString()}`);
   } catch(e) {
-    setStatus('error', `Network error: ${e.message}`);
+    setStatus('error', `Error: ${e.message}`);
   }
 }
 
-// ── KPI Strip ────────────────────────────────────────────────────────────────
-function updateKpis(data) {
-  const pt = data.power_timing || {};
-  const cx = data.complexity || {};
-  const kp = data.kpis || {};
-  const cur = {
-    cells:  kp.total_cells  ?? 0,
-    area:   pt.total_area_um2 ?? 0,
-    power:  pt.total_power_uw ?? 0,
-    freq:   pt.max_freq_mhz ?? 0,
-    cc:     cx.approximated_cyclomatic_complexity ?? 0,
-    regs:   cx.register_bits ?? 0,
-  };
-  set('k-cells', cur.cells); delta('d-cells', prevKpis?.cells, cur.cells, '');
-  set('k-area',  cur.area);  delta('d-area',  prevKpis?.area,  cur.area,  '');
-  set('k-power', cur.power); delta('d-power', prevKpis?.power, cur.power, '');
-  set('k-freq',  cur.freq);  delta('d-freq',  prevKpis?.freq,  cur.freq,  '', true);
-  set('k-cc',    cur.cc);    delta('d-cc',    prevKpis?.cc,    cur.cc,    '');
-  set('k-regs',  cur.regs);  delta('d-regs',  prevKpis?.regs,  cur.regs,  '');
-  prevKpis = cur;
-}
+// Update UI Dashboard Components
+function updateUI(d) {
+  // Update status bar & header
+  document.getElementById('module-info').textContent = `Module: ${d.module_name || 'unknown'}`;
 
-function set(id, val) { document.getElementById(id).textContent = val; }
+  // Update Top KPIs
+  const qs = d.quality_score || {};
+  document.getElementById('k-grade').textContent = qs.grade || '—';
+  document.getElementById('k-lint').textContent = (d.lint_warnings || []).length;
+  
+  const synth = d.synthesis || {};
+  document.getElementById('k-cells').textContent = synth.total_cells !== undefined ? synth.total_cells : '—';
+  
+  const pt = d.power_timing || {};
+  document.getElementById('k-delay').textContent = pt.critical_path_ps ? `${pt.critical_path_ps} ps` : '—';
+  document.getElementById('k-power').textContent = pt.total_power_uw ? `${pt.total_power_uw} μW` : '—';
+  document.getElementById('k-area').textContent = pt.total_area_um2 ? `${pt.total_area_um2} μm²` : '—';
 
-function delta(id, prev, cur, unit, invert=false) {
-  const el = document.getElementById(id);
-  if (prev === null || prev === undefined) { el.textContent=''; return; }
-  const d = cur - prev;
-  if (d === 0) { el.textContent=''; el.className='delta same'; return; }
-  const pct = prev !== 0 ? (Math.abs(d/prev)*100).toFixed(1) : '—';
-  const better = invert ? d > 0 : d < 0;
-  el.textContent = `${d > 0 ? '+' : ''}${d.toFixed ? d.toFixed(1) : d}${unit} (${d>0?'+':''}${pct}%)`;
-  el.className = `delta ${better ? 'down' : 'up'}`;
-}
+  // Render Gate Chart & Table
+  renderGateChart(synth.gates || {});
+  renderGateTable(synth.gates || {});
 
-// ── Lint Panel ───────────────────────────────────────────────────────────────
-function renderLint(warnings, verilator) {
-  const panel = document.getElementById('lint-panel');
-  let html = '';
-  const vlines = (verilator || '').split('\n').filter(l => /%Warning|%Error/.test(l));
-  const all = [...warnings, ...vlines];
-  if (!all.length) {
-    html = '<div class="lint-row ok"><span class="lint-badge">CLEAN</span><span>No lint warnings detected.</span></div>';
+  // Render ML Bug Classifier & Linting
+  const bugProb = d.bug_probability !== null ? d.bug_probability : 0;
+  document.getElementById('bug-prob-val').textContent = `${bugProb}%`;
+  const bugBadge = document.getElementById('bug-prob-badge');
+  if (bugProb > 50) {
+    bugBadge.textContent = 'HIGH BUG RISK';
+    bugBadge.style.color = '#ef4444'; bugBadge.style.borderColor = '#ef4444'; bugBadge.style.background = '#250a0a';
+  } else if (bugProb > 20) {
+    bugBadge.textContent = 'MODERATE RISK';
+    bugBadge.style.color = '#f59e0b'; bugBadge.style.borderColor = '#f59e0b'; bugBadge.style.background = '#251a0a';
   } else {
-    all.forEach(w => {
-      const isErr = w.includes('[CDC') || w.includes('[MULTI') || w.includes('%Error');
-      html += `<div class="lint-row ${isErr?'err':'warn'}"><span class="lint-badge">${isErr?'ERR':'WARN'}</span><span>${escHtml(w)}</span></div>`;
-    });
+    bugBadge.textContent = 'LOW RISK';
+    bugBadge.style.color = '#14b8a6'; bugBadge.style.borderColor = '#14b8a6'; bugBadge.style.background = '#09241b';
   }
-  panel.innerHTML = html;
+
+  renderLintItems(d.lint_warnings || []);
+  document.getElementById('verilator-out-box').textContent = d.verilator_warnings || 'Verilator clean.';
+
+  // Render RTL Quality Scorecard
+  document.getElementById('q-grade-badge').textContent = qs.grade || 'F';
+  document.getElementById('q-total-score').textContent = `${qs.total_score || 0} / 100`;
+
+  const breakdownBox = document.getElementById('q-breakdown-box');
+  const factors = [
+    ["Lint Cleanliness", "lint_cleanliness", 25],
+    ["Coding Style", "coding_style", 20],
+    ["Design Structure", "design_structure", 20],
+    ["Testability", "testability", 15],
+    ["Complexity Balance", "complexity_balance", 10],
+    ["Documentation", "documentation", 10]
+  ];
+  let bdHtml = '';
+  factors.forEach(([lbl, k, maxPts]) => {
+    const val = (qs.breakdown || {})[k] || 0;
+    const pct = Math.round((val / maxPts) * 100);
+    bdHtml += `
+      <div class="prog-row">
+        <div class="prog-lbl"><span>${lbl}</span><span>${val} / ${maxPts} (${pct}%)</span></div>
+        <div class="prog-bg"><div class="prog-fill" style="width:${pct}%"></div></div>
+      </div>`;
+  });
+  breakdownBox.innerHTML = bdHtml;
+
+  const recs = qs.recommendations || [];
+  document.getElementById('q-recs-box').innerHTML = recs.length 
+    ? recs.map(r => `<div>▶ ${r}</div>`).join('')
+    : '✓ Golden RTL: No recommendations needed! Code quality is excellent.';
+
+  document.getElementById('llm-box').textContent = d.llm_explanation || '(LLM analysis skipped)';
+
+  // Render 45nm PPA Power/Timing
+  document.getElementById('ppa-area').textContent = `${pt.total_area_um2 || 0} μm²`;
+  document.getElementById('ppa-power').textContent = `${pt.total_power_uw || 0} μW`;
+  document.getElementById('ppa-power-sub').textContent = `Leakage: ${pt.leakage_power_nw || 0} nW · Dynamic: ${pt.dynamic_power_uw || 0} μW`;
+  document.getElementById('ppa-path').textContent = `${pt.critical_path_ps || 0} ps`;
+  document.getElementById('ppa-stages').textContent = `${pt.estimated_stages || 0} logic stages`;
+  document.getElementById('ppa-fmax').textContent = `${pt.max_freq_mhz || 0} MHz`;
+
+  // Render Complexity
+  const cx = d.complexity_metrics || {};
+  document.getElementById('cx-cc').textContent = cx.approximated_cyclomatic_complexity || cx.cyclomatic_complexity || 0;
+  document.getElementById('cx-regs').textContent = `${cx.register_bits || 0} bits`;
+
+  const cxTable = document.getElementById('cx-table-body');
+  const cxItems = [
+    ["Port Count", cx.port_count || 0],
+    ["Internal Signals", cx.signal_count || 0],
+    ["If Statements", cx.if_statements || 0],
+    ["Case Statements", cx.case_statements || 0],
+    ["Max Nesting Depth", cx.max_nesting_depth || 0],
+    ["Clock Domains", (cx.clock_domains || []).join(', ') || 'None']
+  ];
+  cxTable.innerHTML = cxItems.map(([k,v]) => `<tr><td>${k}</td><td>${v}</td></tr>`).join('');
+
+  // Render Testbench
+  const tbBadge = document.getElementById('tb-status-badge');
+  if (d.testbench_compiles) {
+    tbBadge.className = 'lint-item ok'; tbBadge.innerHTML = '<span class="badge">COMPILED</span>Testbench compiled successfully with iverilog';
+  } else {
+    tbBadge.className = 'lint-item error'; tbBadge.innerHTML = '<span class="badge">FAILED</span>Testbench compilation failed';
+  }
+  document.getElementById('tb-code-box').textContent = d.testbench_enhanced || '// Testbench skipped';
+  document.getElementById('tb-sim-box').textContent = d.testbench_simulation_output || '// No simulation output';
+
+  // Render Report Text
+  document.getElementById('report-text-box').textContent = d.report_text || '';
 }
 
-// ── Gate Chart (replaces DigitalJS schematic — no CDN dependency) ─────────────
-function renderSchematic(netlist) {
-  const frame = document.getElementById('schematic-frame');
-  const placeholder = document.getElementById('schematic-placeholder');
+// SVG Gate Chart Renderer
+function renderGateChart(gates) {
+  const container = document.getElementById('gate-chart-container');
+  const entries = Object.entries(gates).sort((a,b) => b[1]-a[1]).slice(0, 15);
+  if (!entries.length) {
+    container.innerHTML = '<div style="color:#4d7c66;text-align:center;padding:40px;">No synthesized gates available</div>';
+    return;
+  }
 
-  if (!netlist) { frame.style.display='none'; placeholder.style.display='flex'; return; }
-
-  // Extract gates from all modules in the Yosys JSON netlist
-  const gates = {};
-  try {
-    const modules = netlist.modules || {};
-    for (const mod of Object.values(modules)) {
-      for (const [cell, info] of Object.entries(mod.cells || {})) {
-        const t = info.type || cell;
-        gates[t] = (gates[t] || 0) + 1;
-      }
-    }
-  } catch(e) {}
-
-  const entries = Object.entries(gates).sort((a,b) => b[1]-a[1]).slice(0, 18);
-  const maxVal  = entries.reduce((m,[,v]) => Math.max(m,v), 1);
+  const maxVal = entries.reduce((m,[,v]) => Math.max(m,v), 1);
+  const W = 460, PL = 140, PB = 20, BAR_H = 18, GAP = 5;
+  const H = entries.length * (BAR_H + GAP) + PB + 20;
 
   const COLORS = {
-    '$_DFF_P_':'#14b8a6','$_DFF_N_':'#14b8a6','$_SDFF_PP0_':'#14b8a6','$_DLATCH_P_':'#14b8a6',
+    '$_DFF_P_':'#14b8a6','$_DFF_N_':'#14b8a6',
     '$_AND_':'#3b82f6','$_NAND_':'#3b82f6','$_OR_':'#8b5cf6','$_NOR_':'#8b5cf6',
     '$_XOR_':'#f59e0b','$_XNOR_':'#f59e0b','$_NOT_':'#10b981','$_BUF_':'#10b981',
-    '$_MUX_':'#ef4444','$_AOI3_':'#f97316','$_OAI3_':'#f97316',
-    '$_ANDNOT_':'#64748b','$_ORNOT_':'#64748b'
+    '$_MUX_':'#ef4444','$_AOI3_':'#f97316'
   };
 
-  // Build the chart SVG inline in an iframe page
-  const W = 480, PL = 160, PB = 30, BAR_H = 20, GAP = 6;
-  const H = entries.length * (BAR_H + GAP) + PB + 40;
-
   let bars = entries.map(([name, count], i) => {
-    const y = 30 + i*(BAR_H+GAP);
-    const bw = Math.max(4, Math.round((count/maxVal)*(W-PL-20)));
+    const y = 20 + i*(BAR_H+GAP);
+    const bw = Math.max(4, Math.round((count/maxVal)*(W-PL-30)));
     const color = COLORS[name] || '#4d7c66';
     const shortName = name.replace(/^\$_/,'').replace(/_$/,'');
     return `
-      <text x="${PL-8}" y="${y+14}" fill="#8ea499" font-size="11" text-anchor="end" font-family="JetBrains Mono,monospace">${shortName}</text>
-      <rect x="${PL}" y="${y}" width="${bw}" height="${BAR_H}" fill="${color}" rx="3" opacity="0.85"/>
-      <text x="${PL+bw+6}" y="${y+14}" fill="#c0d0c5" font-size="11" font-family="JetBrains Mono,monospace">${count}</text>`;
+      <text x="${PL-8}" y="${y+13}" fill="#8ea499" font-size="11" text-anchor="end" font-family="JetBrains Mono,monospace">${shortName}</text>
+      <rect x="${PL}" y="${y}" width="${bw}" height="${BAR_H}" fill="${color}" rx="3" opacity="0.9"/>
+      <text x="${PL+bw+6}" y="${y+13}" fill="#c0d0c5" font-size="11" font-family="JetBrains Mono,monospace">${count}</text>`;
   }).join('');
 
-  const totalCells = entries.reduce((s,[,v])=>s+v,0);
-  const page = `<!DOCTYPE html><html><head>
-<style>*{margin:0;padding:0;box-sizing:border-box}body{background:#070c0a;overflow:auto;font-family:'JetBrains Mono',monospace}</style>
-</head><body>
-<div style="padding:14px">
-  <div style="font-size:10px;color:#4d7c66;text-transform:uppercase;letter-spacing:.1em;margin-bottom:12px">
-    ⬡ Gate Breakdown · ${totalCells} total cells
-  </div>
-  <svg width="100%" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
-    <rect width="${W}" height="${H}" fill="#070c0a"/>
-    ${bars}
-    <line x1="${PL}" y1="${H-PB}" x2="${W-10}" y2="${H-PB}" stroke="#1a3025" stroke-width="1"/>
-  </svg>
-  <div style="margin-top:14px;display:flex;gap:12px;flex-wrap:wrap;font-size:10px;color:#4d7c66">
-    <span><span style="color:#14b8a6">■</span> Flip-Flops</span>
-    <span><span style="color:#3b82f6">■</span> AND/NAND</span>
-    <span><span style="color:#8b5cf6">■</span> OR/NOR</span>
-    <span><span style="color:#f59e0b">■</span> XOR/XNOR</span>
-    <span><span style="color:#10b981">■</span> BUF/NOT</span>
-    <span><span style="color:#ef4444">■</span> MUX</span>
-  </div>
-</div>
-</body></html>`;
-
-  const blob = new Blob([page], { type: 'text/html' });
-  frame.src = URL.createObjectURL(blob);
-  frame.style.display = 'block';
-  placeholder.style.display = 'none';
+  container.innerHTML = `
+    <svg width="100%" viewBox="0 0 ${W} ${H}" xmlns="http://www.w3.org/2000/svg">
+      <rect width="${W}" height="${H}" fill="#070c0a"/>
+      ${bars}
+    </svg>`;
 }
 
-// ── Helpers ───────────────────────────────────────────────────────────────────
+// Gate Table Renderer
+function renderGateTable(gates) {
+  const tbody = document.getElementById('gate-table-body');
+  const entries = Object.entries(gates).sort((a,b) => b[1]-a[1]);
+  if (!entries.length) {
+    tbody.innerHTML = '<tr><td colspan="3" style="color:#4d7c66;text-align:center">No gates</td></tr>';
+    return;
+  }
+  tbody.innerHTML = entries.map(([g, c]) => {
+    let cat = 'Logic Gate';
+    if (g.includes('DFF') || g.includes('LATCH')) cat = 'Sequential Register';
+    else if (g.includes('MUX')) cat = 'Multiplexer';
+    else if (g.includes('BUF') || g.includes('NOT')) cat = 'Buffer / Inverter';
+    return `<tr><td>${g}</td><td>${c}</td><td>${cat}</td></tr>`;
+  }).join('');
+}
+
+// Lint Renderer
+function renderLintItems(warnings) {
+  const container = document.getElementById('custom-lint-list');
+  if (!warnings.length) {
+    container.innerHTML = '<div class="lint-item ok"><span class="badge">CLEAN</span>No custom static lint warnings detected.</div>';
+    return;
+  }
+  container.innerHTML = warnings.map(w => {
+    const badge = w.includes('CDC') ? 'CDC' : w.includes('BLOCKING') ? 'BLOCKING' : w.includes('LATCH') ? 'LATCH' : 'WARN';
+    const cls = w.includes('CDC') || w.includes('MULTI') ? 'error' : 'warn';
+    return `<div class="lint-item ${cls}"><span class="badge">${badge}</span>${w}</div>`;
+  }).join('');
+}
+
+// Run Side-by-Side Comparison
+async function runComparison() {
+  const targetFile = document.getElementById('compare-select').value;
+  if (!targetFile) return;
+
+  try {
+    const tRes = await fetch(`${API_BASE}/sample/${targetFile}`);
+    const tData = await tRes.json();
+    if (!tData.code) return;
+
+    const baseCode = editor.getValue();
+    const cRes = await fetch(`${API_BASE}/compare`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ base_code: baseCode, target_code: tData.code })
+    });
+    const cData = await cRes.json();
+
+    renderCompareTable(cData.base, cData.target);
+  } catch(e) {}
+}
+
+function renderCompareTable(base, target) {
+  const tbody = document.getElementById('compare-table-body');
+  const metrics = [
+    ["RTL Quality Score", base.quality_score?.total_score || 0, target.quality_score?.total_score || 0],
+    ["Lint Warnings", (base.lint_warnings || []).length, (target.lint_warnings || []).length],
+    ["Synthesis Total Cells", base.synthesis?.total_cells || 0, target.synthesis?.total_cells || 0],
+    ["Cyclomatic Complexity", base.complexity_metrics?.approximated_cyclomatic_complexity || 0, target.complexity_metrics?.approximated_cyclomatic_complexity || 0],
+    ["Estimated Area (μm²)", base.power_timing?.total_area_um2 || 0, target.power_timing?.total_area_um2 || 0],
+    ["Total Power (μW)", base.power_timing?.total_power_uw || 0, target.power_timing?.total_power_uw || 0],
+    ["Critical Path (ps)", base.power_timing?.critical_path_ps || 0, target.power_timing?.critical_path_ps || 0],
+    ["Max Frequency (MHz)", base.power_timing?.max_freq_mhz || 0, target.power_timing?.max_freq_mhz || 0]
+  ];
+
+  tbody.innerHTML = metrics.map(([label, bVal, tVal]) => {
+    const diff = tVal - bVal;
+    const diffStr = diff > 0 ? `+${diff.toFixed(1)}` : diff.toFixed(1);
+    const color = diff === 0 ? '#4d7c66' : label.includes('Score') || label.includes('Frequency') ? (diff > 0 ? '#10b981' : '#ef4444') : (diff > 0 ? '#ef4444' : '#10b981');
+    return `<tr><td>${label}</td><td>${bVal}</td><td>${tVal}</td><td style="color:${color};font-weight:600">${diffStr}</td></tr>`;
+  }).join('');
+}
+
+// Copy & Download Report
+function copyReport() {
+  const text = document.getElementById('report-text-box').textContent;
+  navigator.clipboard.writeText(text);
+  alert("Report copied to clipboard!");
+}
+function downloadReport() {
+  const text = document.getElementById('report-text-box').textContent;
+  const blob = new Blob([text], { type: 'text/plain' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `${currentReport?.module_name || 'verilog'}_report.txt`;
+  a.click();
+}
+
+// Status Helper
 function setStatus(state, msg) {
   const dot = document.getElementById('status-dot');
   document.getElementById('status-text').textContent = msg;
   dot.className = `dot ${state === 'active' ? 'active' : state === 'error' ? 'error' : ''}`;
-}
-function escHtml(s) {
-  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 </script>
 </body>
