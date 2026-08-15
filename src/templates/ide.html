@@ -230,19 +230,24 @@ function renderSchematic(netlist) {
   if (!netlist) { frame.style.display='none'; placeholder.style.display='flex'; return; }
 
   // Build self-contained HTML page that loads DigitalJS from CDN
+  // Use yosys2digitaljs to convert raw Yosys JSON → DigitalJS format before rendering
   const page = `<!DOCTYPE html><html><head>
 <script src="https://cdn.jsdelivr.net/npm/jquery@3.7.1/dist/jquery.min.js"><\/script>
 <script src="https://cdn.jsdelivr.net/npm/lodash@4.17.21/lodash.min.js"><\/script>
 <script src="https://cdn.jsdelivr.net/npm/backbone@1.4.1/backbone-min.js"><\/script>
 <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/jointjs@3.5.5/dist/joint.min.css"/>
 <script src="https://cdn.jsdelivr.net/npm/jointjs@3.5.5/dist/joint.min.js"><\/script>
+<script src="https://cdn.jsdelivr.net/npm/yosys2digitaljs@0.9.0/dist/main.umd.js"><\/script>
 <script src="https://cdn.jsdelivr.net/npm/digitaljs@0.14.2/dist/main.min.js"><\/script>
-<style>body{background:#070c0a;margin:0;overflow:hidden}#paper{width:100vw;height:100vh}</style>
+<style>body{background:#070c0a;margin:0;overflow:hidden}#paper{width:100vw;height:100vh;overflow:auto}</style>
 </head><body>
 <div id="paper"></div>
 <script>
 try {
-  const circuit = new digitaljs.Circuit(${JSON.stringify(netlist)});
+  const yosysJson = ${JSON.stringify(netlist)};
+  // Convert Yosys JSON format → DigitalJS circuit JSON
+  const digitalJson = yosys2digitaljs.default ? yosys2digitaljs.default(yosysJson) : yosys2digitaljs(yosysJson);
+  const circuit = new digitaljs.Circuit(digitalJson);
   const paper   = circuit.displayOn($('#paper'));
   circuit.start();
 } catch(e) {
