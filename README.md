@@ -19,7 +19,8 @@ Point it at any Verilog file and it will:
 | ⚡ **Static Linting** | 10-rule custom engine + Verilator `-Wall` for common RTL bugs |
 | 🧠 **LLM Explanation** | Gemini AI generates plain-English architecture explanation + structural risk notes |
 | ⬡ **Gate Synthesis** | Real Yosys synthesis with technology-independent gate counts, wire stats, cell-type breakdowns |
-| 🤖 **ML Bug Risk** | RandomForest anomaly classifier scores bug probability from AST + synthesis features |
+| 🤖 **AI Prediction Engine** | RandomForest ML model predicts RTL quality & defect patterns from structural features |
+| 🎯 **PSO Metaheuristic Optimizer** | Particle Swarm Optimization over Yosys parameter space to optimize Area/Power/Timing |
 | 📊 **RTL Quality Score** | 0–100 score + A+–F letter grade across 6 dimensions with optimization recommendations |
 | 🔌 **45nm PPA Estimation** | Standard cell area, leakage/dynamic power, critical path delay, and Fmax calculation |
 | 🧪 **Testbench & Simulation** | Auto-generated Verilog testbench compiled and executed with `iverilog` / `vvp` |
@@ -133,23 +134,20 @@ The platform features a full **3-panel SPA** layout:
 ## ⌨️ CLI Usage
 
 ```powershell
-# Full analysis — all stages
+# Full analysis — all 10 stages
 python eda_assistant.py analyze tests/verilog/alu_8bit.v
 
-# Skip LLM (faster, offline)
-python eda_assistant.py analyze tests/verilog/clean_fsm.v --no-llm
+# Skip LLM & AI (faster, offline)
+python eda_assistant.py analyze tests/verilog/clean_fsm.v --no-llm --no-ai
 
-# Skip Yosys synthesis
-python eda_assistant.py analyze tests/verilog/adder.v --no-synth
+# Enable PSO design space exploration (search area/power/timing trade-offs)
+python eda_assistant.py analyze tests/verilog/adder.v --optimize --optimize-for balanced
 
-# Skip testbench generation
-python eda_assistant.py analyze tests/verilog/fifo.v --no-tb
+# Customize PSO search budget
+python eda_assistant.py analyze tests/verilog/uart_tx.v --optimize --pso-particles 15 --pso-iterations 20
 
 # Output as JSON
-python eda_assistant.py analyze tests/verilog/uart_tx.v --json
-
-# Save report to file
-python eda_assistant.py analyze tests/verilog/spi_master.v --save reports/spi_report.txt
+python eda_assistant.py analyze tests/verilog/spi_master.v --json
 ```
 
 **CLI flags:**
@@ -159,8 +157,33 @@ python eda_assistant.py analyze tests/verilog/spi_master.v --save reports/spi_re
 | `--no-llm` | Skip Gemini LLM explanation (fast, offline) |
 | `--no-synth` | Skip Yosys synthesis |
 | `--no-tb` | Skip testbench generation |
+| `--no-ai` | Skip AI prediction engine |
+| `--optimize` | Enable PSO design parameter space optimization |
+| `--optimize-for <objective>` | Set PSO target (`area`, `power`, `timing`, or `balanced`) |
+| `--pso-particles <N>` | Set particle swarm size (default 12) |
+| `--pso-iterations <N>` | Set optimization iterations (default 15) |
 | `--json` | Print JSON output instead of plain text |
 | `--save <path>` | Save report to file |
+
+---
+
+## 🤖 AI Prediction Engine (`src/ai_predictor.py`)
+
+The AI Prediction Engine provides a learned, structural second opinion on RTL quality and flags defect risk patterns:
+
+- **Feature Vector**: Extracted from IR signal counts, always blocks, cyclomatic complexity, nesting depth, and categorized lint warning rates.
+- **Model**: Scikit-Learn `RandomForestRegressor` persisted at `models/ai_predictor.joblib` (retrainable via `python train_model.py`).
+- **Disagreement Delta**: Computes delta between learned prediction and rule-based score to highlight unusual architectural patterns.
+
+---
+
+## 🎯 PSO-Based Design Optimization (`src/pso_optimizer.py`)
+
+Uses a Particle Swarm Optimization metaheuristic algorithm to explore the Yosys synthesis parameter space:
+
+- **Search Space**: ABC optimization scripts, clock period targets, netlist flattening vs. hierarchy, resource sharing, and FSM encoding schemes.
+- **Fitness Function**: Re-invokes real Yosys synthesis evaluations and evaluates a multi-objective loss combining normalized area, dynamic power, critical-path delay, and RTL quality score.
+- **Result Output**: Recommends optimal synthesis configuration, displays fitness loss convergence history, and presents a baseline-vs-optimized comparison table.
 
 ---
 

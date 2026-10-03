@@ -49,9 +49,9 @@ def generate_tb_skeleton(ir_summary: dict) -> str:
     Generate a compilable testbench skeleton from the module's port list.
     This is deterministic and guaranteed to compile — no LLM involved.
     """
-    mod_name = ir_summary["name"]
-    ports = ir_summary["ports"]          # list of port name strings
-    port_details = ir_summary.get("port_details", [])  # list of dicts with direction/width
+    mod_name = ir_summary.get("name", "dut") if isinstance(ir_summary, dict) else "dut"
+    ports = ir_summary.get("ports", []) if isinstance(ir_summary, dict) else []
+    port_details = ir_summary.get("port_details", []) if isinstance(ir_summary, dict) else []
 
     # Build declaration lines
     decl_lines = []

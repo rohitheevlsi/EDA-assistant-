@@ -28,6 +28,7 @@ from src.toolchain import setup_toolchain_env
 os.environ.update(setup_toolchain_env())
 
 from eda_assistant import analyze as run_eda_analysis
+from src.metaheuristics import optimize as run_metaheuristic_opt
 from data_generation.train_bug_classifier import extract_ml_features
 
 app = FastAPI(title="EDA Assistant — Unified RTL Intelligence Platform", version="2.0.0")
@@ -62,6 +63,17 @@ class VerilogPayload(BaseModel):
     use_llm: bool = False
     use_synth: bool = True
     use_tb: bool = True
+    use_optimize: bool = False
+    optimizer_algo: str = "pso"
+    optimize_for: str = "balanced"
+
+
+class OptimizationPayload(BaseModel):
+    code: str
+    algorithm: str = "pso"  # "pso", "ga", "sa"
+    objective: str = "balanced"  # "balanced", "area", "power", "timing"
+    iterations: int = 10
+    particles_or_pop: int = 8
 
 
 class ComparisonPayload(BaseModel):
@@ -72,7 +84,11 @@ class ComparisonPayload(BaseModel):
 @app.get("/health")
 async def health_check():
     """Health check endpoint."""
-    return {"status": "ok", "bug_model_loaded": bug_model is not None}
+    return {
+        "status": "ok",
+        "bug_model_loaded": bug_model is not None,
+        "metaheuristics": ["pso", "ga", "sa"]
+    }
 
 
 @app.get("/", response_class=HTMLResponse)
@@ -152,6 +168,9 @@ async def analyze_verilog(payload: VerilogPayload):
             use_llm=payload.use_llm,
             use_synth=payload.use_synth,
             use_tb=payload.use_tb,
+            use_optimize=payload.use_optimize,
+            optimizer_algo=payload.optimizer_algo,
+            optimize_for=payload.optimize_for,
         )
         res = report.to_dict()
         res["report_text"] = report.to_text()
@@ -163,6 +182,45 @@ async def analyze_verilog(payload: VerilogPayload):
         return JSONResponse(
             status_code=200,
             content={"error": traceback.format_exc(), "module_name": "unknown"},
+        )
+    finally:
+        try:
+            os.unlink(tmp_path)
+        except Exception:
+            pass
+
+
+@app.post("/optimize")
+async def optimize_design(payload: OptimizationPayload):
+    """
+    Run metaheuristic parameter optimization (PSO, GA, or SA) on Verilog code.
+    Explores the Yosys synthesis parameter space for optimal Area/Power/Timing trade-offs.
+    """
+    code = payload.code.strip()
+    if not code:
+        raise HTTPException(status_code=400, detail="Empty Verilog code.")
+
+    with tempfile.NamedTemporaryFile(mode="w", suffix=".v", delete=False, encoding="utf-8") as tmp:
+        tmp.write(code)
+        tmp_path = tmp.name
+
+    try:
+        result = await run_in_threadpool(
+            run_metaheuristic_opt,
+            tmp_path,
+            algorithm=payload.algorithm,
+            objective=payload.objective,
+            n_particles=payload.particles_or_pop,
+            population_size=payload.particles_or_pop,
+            n_iterations=payload.iterations,
+            n_generations=payload.iterations
+        )
+        return JSONResponse(content={"status": "ok", "optimization": result})
+    except Exception as exc:
+        print(f"[Error] Optimization failure: {exc}")
+        return JSONResponse(
+            status_code=500,
+            content={"status": "error", "error": str(exc), "traceback": traceback.format_exc()}
         )
     finally:
         try:

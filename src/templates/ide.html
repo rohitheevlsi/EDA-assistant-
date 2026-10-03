@@ -608,16 +608,35 @@ function loadMonacoAsync() {
         automaticLayout: true,
         fontSize: 13,
         fontFamily: "'JetBrains Mono', Consolas, monospace",
-        minimap: { enabled: false }
+        minimap: { enabled: false },
+        scrollBeyondLastLine: false,
+        wordWrap: 'off'
       });
 
       // Only hide textarea AFTER Monaco editor is confirmed created
       if (ta) ta.style.display = 'none';
 
+      // Suppress the first onDidChangeModelContent that fires from setValue() on init
+      let monacoReady = false;
+      setTimeout(() => { monacoReady = true; }, 800);
+
       editor.onDidChangeModelContent(() => {
-        setStatus('active', 'Editing…');
+        if (!monacoReady) return;
+        setStatus('active', 'Editing\u2026');
         clearTimeout(debounceTimer);
         debounceTimer = setTimeout(runAnalysis, 1200);
+      });
+
+      // Ctrl+Enter: instant run without debounce
+      editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => {
+        clearTimeout(debounceTimer);
+        runAnalysis();
+      });
+
+      // Paste event: run immediately after paste (no 1200ms wait)
+      editor.onDidPaste(() => {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(runAnalysis, 400);
       });
     });
   } catch(e) {
@@ -732,9 +751,13 @@ async function runAnalysis() {
     currentReport = data;
 
     if (data.error) {
-      setStatus('error', 'Syntax or verilog parse error');
+      setStatus('error', 'Syntax or Verilog compile error');
       document.getElementById('verilator-out-box').textContent = data.error;
+      switchTab('t-lint');
     } else {
+      if (data.module_name && data.module_name !== 'unknown') {
+        document.getElementById('file-name-lbl').textContent = `📝 ${data.module_name}.v`;
+      }
       updateUI(data);
       setStatus('idle', `Analysis complete · ${new Date().toLocaleTimeString()}`);
     }
@@ -834,13 +857,28 @@ function updateUI(d) {
   cxTable.innerHTML = cxItems.map(([k,v]) => `<tr><td>${k}</td><td>${v}</td></tr>`).join('');
 
   const tbBadge = document.getElementById('tb-status-badge');
-  if (d.testbench_compiles) {
-    tbBadge.className = 'lint-item ok'; tbBadge.innerHTML = '<span class="badge">COMPILED</span>Testbench compiled successfully with iverilog';
+  const useTBOn = document.getElementById('toggle-tb').checked;
+  if (!useTBOn) {
+    tbBadge.className = 'lint-item warn';
+    tbBadge.innerHTML = '<span class="badge">SKIPPED</span>Testbench disabled — enable the 🧪 Testbench toggle and re-run.';
+  } else if (d.testbench_compiles === true) {
+    tbBadge.className = 'lint-item ok';
+    tbBadge.innerHTML = '<span class="badge">COMPILED</span>Testbench compiled and executed successfully with iverilog + vvp.';
+  } else if (d.testbench_enhanced) {
+    // Generated but failed to compile
+    tbBadge.className = 'lint-item error';
+    const errHint = (d.testbench_simulation_output || '').slice(0, 200) || 'Check module port names match.';
+    tbBadge.innerHTML = `<span class="badge">COMPILE FAIL</span>iverilog reported an error — <em>${errHint}</em>`;
   } else {
-    tbBadge.className = 'lint-item error'; tbBadge.innerHTML = '<span class="badge">FAILED</span>Testbench compilation failed';
+    // Nothing generated
+    tbBadge.className = 'lint-item warn';
+    tbBadge.innerHTML = '<span class="badge">NO TB</span>Could not generate testbench — ensure the module has a valid port list.';
   }
-  document.getElementById('tb-code-box').textContent = d.testbench_enhanced || '// Testbench skipped';
-  document.getElementById('tb-sim-box').textContent = d.testbench_simulation_output || '// No simulation output';
+
+  const tbCode = d.testbench_enhanced || '';
+  document.getElementById('tb-code-box').textContent = tbCode || '// No testbench generated for this module.';
+  const simOut = d.testbench_simulation_output || '';
+  document.getElementById('tb-sim-box').textContent = simOut || '// No simulation output — compilation may have failed above.';
 
   document.getElementById('report-text-box').textContent = d.report_text || '';
 }

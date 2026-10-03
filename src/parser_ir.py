@@ -1,20 +1,78 @@
-from src.toolchain import setup_toolchain_env
 import os
+import re
+from src.toolchain import setup_toolchain_env
 os.environ.update(setup_toolchain_env())
 
 from pyverilog.vparser.parser import parse
 
 def parse_verilog(file_path):
-    # parse takes a list of files
-    ast, directives = parse([file_path])
-    return ast
+    """Safely parse Verilog file into AST. Returns None on parse failure."""
+    try:
+        ast, _ = parse([file_path])
+        return ast
+    except Exception as e:
+        print(f"[Warning] Pyverilog parse exception: {e}")
+def strip_verilog_comments(code_text):
+    """Strip single-line and multi-line comments from Verilog source code."""
+    code_no_block = re.sub(r'/\*.*?\*/', '', code_text, flags=re.DOTALL)
+    return re.sub(r'//.*', '', code_no_block)
 
-def summarize_ast(ast):
+def summarize_ast_regex(code_text):
+    """Fallback regex extractor for Verilog / SystemVerilog when Pyverilog AST parsing fails."""
+    clean_code = strip_verilog_comments(code_text)
+    # Find module name
+    mod_match = re.search(r'\bmodule\s+([A-Za-z_][A-Za-z0-9_]*)', clean_code)
+    mod_name = mod_match.group(1) if mod_match else "unknown_module"
+
+    ports = []
+    port_details = []
+
+    # Port regex matching: (input|output|inout) [wire|reg|logic] [msb:lsb] name
+    port_pattern = re.compile(
+        r'\b(input|output|inout)\s+(?:wire|reg|logic)?\s*(?:signed)?\s*(\[[^\]]+\])?\s*([A-Za-z_][A-Za-z0-9_]*)',
+        re.IGNORECASE
+    )
+    for m in port_pattern.finditer(clean_code):
+        direction, width_str, name = m.group(1).lower(), m.group(2) or "", m.group(3)
+        ports.append(name)
+        port_details.append({
+            'name': name,
+            'direction': direction,
+            'width_str': width_str.strip()
+        })
+
+    # Signals (wire/reg/logic declarations)
+    sig_pattern = re.compile(r'\b(reg|wire|logic)\s*(?:\[[^\]]+\])?\s*([A-Za-z_][A-Za-z0-9_]*)', re.IGNORECASE)
+    signals = list(set(m.group(2) for m in sig_pattern.finditer(code_text)))
+
+    # Always blocks count
+    always_blocks = len(re.findall(r'\balways\b|\balways_comb\b|\balways_ff\b', code_text, re.IGNORECASE))
+
+    return {
+        'modules': [{
+            'name': mod_name,
+            'ports': ports,
+            'port_details': port_details,
+            'signals': signals,
+            'always_blocks': always_blocks
+        }]
+    }
+
+def summarize_ast(ast, file_path=None):
+    """Summarize AST into structured IR. Falls back to regex if AST is None or empty."""
+    if ast is None or not hasattr(ast, 'description') or not ast.description:
+        if file_path and os.path.exists(file_path):
+            try:
+                with open(file_path, encoding='utf-8', errors='replace') as f:
+                    return summarize_ast_regex(f.read())
+            except Exception:
+                pass
+        return {'modules': []}
+
     summary = {
         'modules': []
     }
-    # AST root is usually Source -> Description -> ModuleDef
-    if ast.description:
+    try:
         for desc in ast.description.definitions:
             if type(desc).__name__ == 'ModuleDef':
                 mod_info = {
@@ -48,11 +106,9 @@ def summarize_ast(ast):
                 
                 port_decls = find_port_decls(desc)
                 for decl in port_decls:
-                    dir_name = type(decl).__name__.lower() # input, output, or inout
-                    # width is a Width node, or None
+                    dir_name = type(decl).__name__.lower()
                     width_str = ""
                     if decl.width:
-                        # Visit the width node to get '[msb:lsb]' string
                         width_str = codegen.visit(decl.width).strip()
                     mod_info['port_details'].append({
                         'name': decl.name,
@@ -72,16 +128,27 @@ def summarize_ast(ast):
                         mod_info['always_blocks'] += 1
                 
                 summary['modules'].append(mod_info)
+    except Exception as e:
+        print(f"[Warning] AST summarization error: {e}")
+
+    if not summary['modules'] and file_path and os.path.exists(file_path):
+        try:
+            with open(file_path, encoding='utf-8', errors='replace') as f:
+                return summarize_ast_regex(f.read())
+        except Exception:
+            pass
+
     return summary
 
 def main():
+    import sys
     if len(sys.argv) < 2:
         print("Usage: python parser_ir.py <verilog_file>")
         return
     
     file_path = sys.argv[1]
     ast = parse_verilog(file_path)
-    summary = summarize_ast(ast)
+    summary = summarize_ast(ast, file_path=file_path)
     
     print(f"Summary for {os.path.basename(file_path)}:")
     for mod in summary['modules']:
@@ -92,3 +159,4 @@ def main():
 
 if __name__ == '__main__':
     main()
+

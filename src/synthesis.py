@@ -51,12 +51,35 @@ def _run_yosys(script: str) -> tuple[str, str, int]:
             pass
 
 
-def run_synthesis(filepath: str) -> SynthesisResult:
+def run_synthesis(filepath: str, synth_options: Optional[dict] = None) -> SynthesisResult:
     """
     Run Yosys synthesis on a Verilog file and return real stats.
-    Uses generic gate library (synth with no tech target) to get technology-independent counts.
+    Supports optional synthesis parameters (synth_options dict) for PSO design exploration.
     Generates a structured netlist JSON file for schematic visualization.
     """
+    options = synth_options or {}
+    flatten_str = "-flatten" if options.get("flatten", True) else ""
+
+    # FSM encoding
+    fsm_enc = options.get("fsm_encoding", "auto")
+    fsm_cmd = f"fsm -encoding {fsm_enc}" if fsm_enc != "auto" else ""
+
+    # Resource sharing
+    share_cmd = "share" if options.get("resource_sharing", False) else ""
+
+    # ABC strategy
+    abc_strat = options.get("abc_strategy", "default")
+    if abc_strat == "fast":
+        abc_cmd = "abc -fast"
+    elif abc_strat == "dff":
+        abc_cmd = "abc -dff"
+    elif abc_strat == "all":
+        abc_cmd = "abc -g ALL"
+    elif abc_strat == "simple":
+        abc_cmd = "abc -g SIMPLE"
+    else:
+        abc_cmd = "abc"
+
     # Escape backslashes for Yosys script
     fpath_escaped = filepath.replace("\\", "/")
 
@@ -70,12 +93,18 @@ def run_synthesis(filepath: str) -> SynthesisResult:
 
     json_path_escaped = json_path.replace("\\", "/")
 
-    yosys_script = f"""
-read_verilog "{fpath_escaped}"
-synth -auto-top -flatten
-stat
-write_json "{json_path_escaped}"
-"""
+    script_lines = [f'read_verilog "{fpath_escaped}"']
+    if share_cmd:
+        script_lines.append(share_cmd)
+    if fsm_cmd:
+        script_lines.append(fsm_cmd)
+    script_lines.append(f"synth -auto-top {flatten_str}")
+    if abc_cmd and abc_cmd != "abc":
+        script_lines.append(abc_cmd)
+    script_lines.append("stat")
+    script_lines.append(f'write_json "{json_path_escaped}"')
+
+    yosys_script = "\n".join(script_lines) + "\n"
 
     stdout, stderr, rc = _run_yosys(yosys_script)
 

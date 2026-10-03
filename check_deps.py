@@ -40,6 +40,9 @@ def main():
     deps_ok &= check_command('iverilog', ['-V'], 'Icarus Verilog')
     deps_ok &= check_command('vvp', ['-V'], 'VVP Simulator')
     deps_ok &= check_python_module('pyverilog')
+    deps_ok &= check_python_module('sklearn')
+    deps_ok &= check_python_module('joblib')
+    deps_ok &= check_python_module('numpy')
     
     print("-" * 40)
     if deps_ok:

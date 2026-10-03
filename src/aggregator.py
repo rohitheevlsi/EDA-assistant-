@@ -29,6 +29,8 @@ class EDAReport:
     power_timing: dict = field(default_factory=dict)
     quality_score: dict = field(default_factory=dict)
     source_code: str = ""
+    ai_prediction: dict = field(default_factory=dict)
+    pso_result: Optional[dict] = None
 
     def to_text(self) -> str:
         """Render the full aggregated report as a plain-text string."""
@@ -79,6 +81,45 @@ class EDAReport:
             lines += ["", "=== RTL QUALITY SCORE ===",
                        format_quality_report(self.quality_score)]
 
+        # AI Prediction Engine
+        if self.ai_prediction:
+            ai = self.ai_prediction
+            lines += [
+                "",
+                "=== AI PREDICTION ENGINE ===",
+                f"  Predicted Grade: {ai.get('predicted_grade', 'N/A')}  (Score: {ai.get('predicted_score', 0)}/100, Confidence: {int(ai.get('confidence', 0)*100)}%)",
+                f"  Model-Rule Delta: {ai.get('model_vs_rule_delta', 0.0):+.1f} pts",
+            ]
+            flags = ai.get('risk_flags', [])
+            if flags:
+                lines.append("  Risk Flags:")
+                for rf in flags:
+                    lines.append(f"    • {rf}")
+
+        # Metaheuristic Design Optimization
+        if self.pso_result:
+            pso = self.pso_result
+            bp = pso.get('best_params', {})
+            bm = pso.get('best_metrics', {})
+            comp = pso.get('baseline_vs_optimized', {})
+            algo_title = pso.get('algorithm_name', 'Metaheuristic Design Optimization').upper()
+            lines += [
+                "",
+                f"=== {algo_title} ===",
+                f"  Recommended Synthesis Options:",
+                f"    ABC Strategy:        {bp.get('abc_strategy')}",
+                f"    Target Clock Period: {bp.get('target_clock_period_ns')} ns",
+                f"    Flatten Netlist:     {bp.get('flatten')}",
+                f"    Resource Sharing:    {bp.get('resource_sharing')}",
+                f"    FSM Encoding:        {bp.get('fsm_encoding')}",
+                f"  Optimized Metrics:",
+                f"    Area:   {bm.get('total_area_um2')} um² ({comp.get('area_reduction_pct', 0):+.1f}%)",
+                f"    Power:  {bm.get('total_power_uw')} uW ({comp.get('power_reduction_pct', 0):+.1f}%)",
+                f"    Delay:  {bm.get('critical_path_ps')} ps ({comp.get('delay_reduction_pct', 0):+.1f}%)",
+                f"    Quality: {bm.get('quality_score')} pts ({comp.get('quality_gain_pts', 0):+.1f} pts)",
+                f"  Convergence: Initial loss {pso.get('convergence_history', [0])[0]} -> Best loss {pso.get('best_fitness', 0)}"
+            ]
+
         lines += ["", "=== LLM ANALYSIS ===", self.llm_explanation]
 
         if self.synthesis:
@@ -127,4 +168,6 @@ class EDAReport:
             "complexity_metrics": self.complexity_metrics,
             "power_timing": self.power_timing,
             "quality_score": self.quality_score,
+            "ai_prediction": self.ai_prediction,
+            "pso_result": self.pso_result,
         }

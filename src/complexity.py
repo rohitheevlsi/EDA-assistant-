@@ -161,14 +161,25 @@ def compute_complexity(ast, ir_summary):
     n_signals = len(mod.get('signals', []))
     n_always = mod.get('always_blocks', 0)
 
-    # AST-derived metrics
-    n_if = _count_nodes(ast, 'IfStatement')
-    n_case = _count_nodes(ast, 'CaseStatement')
-    case_branches = _count_case_branches(ast)
-    max_if_depth = _count_if_depth(ast)
-    register_bits = _estimate_register_bits(ast)
-    clock_domains = _detect_clock_domains(ast)
-    memory_bits = _estimate_memory_bits(ast)
+    # AST-derived metrics (with safe fallbacks if AST is None)
+    if ast is not None and hasattr(ast, 'children'):
+        n_if = _count_nodes(ast, 'IfStatement')
+        n_case = _count_nodes(ast, 'CaseStatement')
+        case_branches = _count_case_branches(ast)
+        max_if_depth = _count_if_depth(ast)
+        register_bits = _estimate_register_bits(ast)
+        clock_domains = _detect_clock_domains(ast)
+        memory_bits = _estimate_memory_bits(ast)
+        fsm_states = len(_count_states(ast))
+    else:
+        n_if = 0
+        n_case = 0
+        case_branches = 0
+        max_if_depth = 0
+        register_bits = 0
+        clock_domains = set()
+        memory_bits = 0
+        fsm_states = 0
 
     # Cyclomatic complexity: E - N + 2P
     # Approximate: each if adds 1, each case branch adds 1

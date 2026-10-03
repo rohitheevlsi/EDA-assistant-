@@ -252,6 +252,29 @@ with st.sidebar:
     use_llm = st.toggle("🧠 Gemini Explanation", value=True)
     use_synth = st.toggle("⚙️ Yosys Synthesis", value=True)
     use_tb = st.toggle("🧪 Testbench & Sim", value=True)
+    use_ai = st.toggle("🤖 AI Prediction Engine", value=True)
+    use_opt = st.toggle("🎯 Metaheuristic Optimization", value=False)
+
+    opt_target = "balanced"
+    opt_algo_code = "pso"
+    pso_parts = 12
+    pso_iters = 15
+    if use_opt:
+        opt_algo = st.selectbox("Metaheuristic Algorithm", ["Particle Swarm Optimization (PSO)", "Genetic Algorithm (GA)", "Simulated Annealing (SA)"])
+        if "Genetic" in opt_algo:
+            opt_algo_code = "ga"
+            pso_parts = st.slider("Population Size", min_value=4, max_value=24, value=10)
+            pso_iters = st.slider("Generations", min_value=3, max_value=25, value=10)
+        elif "Annealing" in opt_algo:
+            opt_algo_code = "sa"
+            pso_parts = 8
+            pso_iters = st.slider("Cooling Iterations", min_value=5, max_value=40, value=20)
+        else:
+            opt_algo_code = "pso"
+            pso_parts = st.slider("PSO Particles", min_value=4, max_value=24, value=12)
+            pso_iters = st.slider("PSO Iterations", min_value=5, max_value=30, value=15)
+
+        opt_target = st.selectbox("Optimization Target", ["balanced", "area", "power", "timing"])
 
     st.markdown('<div class="sidebar-section">Source Input</div>', unsafe_allow_html=True)
     input_mode = st.radio("", ["Upload file", "Select sample"], label_visibility="collapsed")
@@ -285,7 +308,9 @@ with st.sidebar:
 <b>Complexity:</b> Cyclomatic / registers<br>
 <b>Power/Timing:</b> 45nm standard cell mapping<br>
 <b>Synthesis:</b> Technology-independent Yosys<br>
-<b>Quality:</b> 6-factor weighted grading
+<b>Quality:</b> 6-factor weighted grading<br>
+<b>AI Engine:</b> Random Forest Classifier<br>
+<b>PSO Optimizer:</b> Multi-objective search
 </div>""", unsafe_allow_html=True)
 
 
@@ -328,7 +353,18 @@ report = None
 if run_analysis or fp not in st.session_state['reports_cache']:
     with st.spinner("Processing through VLSI intelligence pipeline..."):
         try:
-            report = analyze(fp, use_llm=use_llm, use_synth=use_synth, use_tb=use_tb)
+            report = analyze(
+                fp,
+                use_llm=use_llm,
+                use_synth=use_synth,
+                use_tb=use_tb,
+                use_ai=use_ai,
+                use_optimize=use_opt,
+                optimizer_algo=opt_algo_code,
+                optimize_for=opt_target,
+                pso_particles=pso_parts,
+                pso_iterations=pso_iters
+            )
             st.session_state['reports_cache'][fp] = report
         except Exception as e:
             st.error(f"Pipeline Execution Failed: {e}")
@@ -357,7 +393,18 @@ if mode == "Design Comparison":
     if target_fp not in st.session_state['reports_cache']:
         with st.spinner(f"Processing comparison target: {comparison_target}..."):
             try:
-                target_report = analyze(target_fp, use_llm=use_llm, use_synth=use_synth, use_tb=use_tb)
+                target_report = analyze(
+                    target_fp,
+                    use_llm=use_llm,
+                    use_synth=use_synth,
+                    use_tb=use_tb,
+                    use_ai=use_ai,
+                    use_optimize=use_opt,
+                    optimizer_algo=opt_algo_code,
+                    optimize_for=opt_target,
+                    pso_particles=pso_parts,
+                    pso_iterations=pso_iters
+                )
                 st.session_state['reports_cache'][target_fp] = target_report
             except Exception as e:
                 st.error(f"Failed to analyze target: {e}")
@@ -503,13 +550,14 @@ st.markdown(f"""
 
 
 # ── Tabs Configuration ─────────────────────────────────────────────────────
-t_code, t_quality, t_metrics, t_power, t_synth, t_tb, t_raw = st.tabs([
+t_code, t_quality, t_metrics, t_power, t_synth, t_tb, t_opt, t_raw = st.tabs([
     "⚡ Lint & Code",
     "📋 RTL Quality",
     "📊 Design Metrics",
     "🔌 Power & Timing",
     "⬡ Synthesis",
     "🧪 Testbench & Sim",
+    "🎯 Optimization",
     "📄 Raw Report"
 ])
 
@@ -553,7 +601,24 @@ with t_quality:
           <div style="font-size:0.75rem;color:#4d7c66;margin-top:5px;">RTL Code Quality Index</div>
         </div>
         """, unsafe_allow_html=True)
-    
+
+        if report.ai_prediction:
+            ai = report.ai_prediction
+            ai_score = ai.get("predicted_score", 0)
+            ai_grade = ai.get("predicted_grade", "N/A")
+            ai_conf = int(ai.get("confidence", 0) * 100)
+            ai_delta = ai.get("model_vs_rule_delta", 0.0)
+            st.markdown(f"""
+            <div class="quality-card" style="margin-top:15px; border-color:#14b8a6;">
+              <div class="label" style="color:#14b8a6;">🤖 AI Model Second Opinion</div>
+              <div style="font-size:1.8rem;font-weight:700;color:#14b8a6;margin:8px 0;">{ai_grade} ({ai_score}/100)</div>
+              <div style="font-size:0.75rem;color:#a3bcae;">
+                Model Confidence: <b>{ai_conf}%</b><br>
+                Model vs Rule Delta: <b>{ai_delta:+.1f} pts</b>
+              </div>
+            </div>
+            """, unsafe_allow_html=True)
+
     with c2:
         st.markdown("<div class='quality-card'>", unsafe_allow_html=True)
         factors = [
@@ -580,6 +645,11 @@ with t_quality:
             </div>
             """, unsafe_allow_html=True)
         st.markdown("</div>", unsafe_allow_html=True)
+
+    if report.ai_prediction and report.ai_prediction.get("risk_flags"):
+        st.markdown('<div class="sec-label">AI Risk Flags & Pattern Analysis</div>', unsafe_allow_html=True)
+        for rf in report.ai_prediction["risk_flags"]:
+            st.markdown(f'<div class="lint-item warn"><span class="badge">AI RISK</span>{rf}</div>', unsafe_allow_html=True)
 
     st.markdown('<div class="sec-label">VLSI Recommendations & Optimization Path</div>', unsafe_allow_html=True)
     if qs.get("recommendations"):
@@ -742,7 +812,81 @@ with t_tb:
         st.write("Testbench generation skipped or failed.")
 
 
-# ── TAB 7: RAW REPORT & DOWNLOADS ─────────────────────────────────────────
+# ── TAB 7: OPTIMIZATION (METAHEURISTICS) ──────────────────────────────────
+with t_opt:
+    if report.pso_result:
+        pso = report.pso_result
+        bp = pso.get('best_params', {})
+        bm = pso.get('best_metrics', {})
+        base_m = pso.get('baseline_metrics', {})
+        comp = pso.get('baseline_vs_optimized', {})
+        algo_title = pso.get('algorithm_name', 'Metaheuristic Optimization')
+
+        st.markdown(f'<div class="sec-label">{algo_title} Recommended Synthesis Parameters</div>', unsafe_allow_html=True)
+
+        col1, col2 = st.columns(2)
+        with col1:
+            st.markdown(f"""
+            <div class="quality-card">
+              <div class="label">Recommended Configuration</div>
+              <div style="font-size:0.85rem;color:#eaf3ee;margin-top:10px;line-height:1.8">
+                <b>ABC Optimization Strategy:</b> <span style="color:#14b8a6">{bp.get('abc_strategy')}</span><br>
+                <b>Target Clock Constraint:</b> <span style="color:#14b8a6">{bp.get('target_clock_period_ns')} ns</span><br>
+                <b>Netlist Flattening:</b> <span style="color:#14b8a6">{bp.get('flatten')}</span><br>
+                <b>Resource Sharing:</b> <span style="color:#14b8a6">{bp.get('resource_sharing')}</span><br>
+                <b>FSM Encoding Style:</b> <span style="color:#14b8a6">{bp.get('fsm_encoding')}</span>
+              </div>
+            </div>
+            """, unsafe_allow_html=True)
+
+        with col2:
+            st.markdown(f"""
+            <div class="quality-card">
+              <div class="label">{algo_title} Best Fitness Loss</div>
+              <div style="font-size:2.2rem;font-weight:700;color:#14b8a6;margin:10px 0;">{pso.get('best_fitness', 0)}</div>
+              <div style="font-size:0.75rem;color:#6d8c7c;">Multi-objective loss value reached across optimization iterations. Lower loss indicates superior area/power/timing balance.</div>
+            </div>
+            """, unsafe_allow_html=True)
+
+        st.markdown('<div class="sec-label">Baseline vs. Optimized Metrics Delta</div>', unsafe_allow_html=True)
+        opt_df = pd.DataFrame([
+            {
+                "Metric": "Silicon Area (um²)",
+                "Baseline Value": base_m.get("total_area_um2", 0),
+                "Optimized Value": bm.get("total_area_um2", 0),
+                "Improvement": f"{comp.get('area_reduction_pct', 0):+.1f}%"
+            },
+            {
+                "Metric": "Total Power (uW)",
+                "Baseline Value": base_m.get("total_power_uw", 0),
+                "Optimized Value": bm.get("total_power_uw", 0),
+                "Improvement": f"{comp.get('power_reduction_pct', 0):+.1f}%"
+            },
+            {
+                "Metric": "Critical Path Delay (ps)",
+                "Baseline Value": base_m.get("critical_path_ps", 0),
+                "Optimized Value": bm.get("critical_path_ps", 0),
+                "Improvement": f"{comp.get('delay_reduction_pct', 0):+.1f}%"
+            },
+            {
+                "Metric": "RTL Quality Score",
+                "Baseline Value": base_m.get("quality_score", 0),
+                "Optimized Value": bm.get("quality_score", 0),
+                "Improvement": f"{comp.get('quality_gain_pts', 0):+.1f} pts"
+            }
+        ])
+        st.table(opt_df)
+
+        st.markdown(f'<div class="sec-label">{algo_title} Convergence History (Fitness Loss Trajectory)</div>', unsafe_allow_html=True)
+        conv_hist = pso.get('convergence_history', [])
+        if conv_hist:
+            chart_data = pd.DataFrame({"Fitness Loss": conv_hist})
+            st.line_chart(chart_data)
+    else:
+        st.info("🎯 **Metaheuristic Design Optimization is currently disabled.** Enable the **🎯 Metaheuristic Optimization** toggle in the sidebar pipeline stages and re-run the pipeline to explore synthesis parameter trade-offs.")
+
+
+# ── TAB 8: RAW REPORT & DOWNLOADS ─────────────────────────────────────────
 with t_raw:
     st.markdown('<div class="sec-label">Full ASCII Engineering Report</div>', unsafe_allow_html=True)
     st.code(report.to_text(), language="text")

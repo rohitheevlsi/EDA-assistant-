@@ -172,7 +172,7 @@ def _find_case_no_default_seq(node, warnings=None):
 
 def lint_ast(ast):
     results = []
-    if not ast.description:
+    if ast is None or not hasattr(ast, 'description') or not ast.description:
         return results
     for desc in ast.description.definitions:
         if type(desc).__name__ != 'ModuleDef':
