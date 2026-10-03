@@ -1080,6 +1080,114 @@ function setStatus(state, msg) {
   document.getElementById('status-text').textContent = msg;
   if (dot) dot.className = `dot ${state === 'active' ? 'active' : state === 'error' ? 'error' : ''}`;
 }
+
+async function runOptimization() {
+  const code = getCode();
+  if (!code || !code.trim()) {
+    alert("Please provide Verilog code first.");
+    return;
+  }
+  const algo = document.getElementById('opt-algo').value;
+  const obj = document.getElementById('opt-obj').value;
+  const pop = parseInt(document.getElementById('opt-pop').value) || 8;
+  const iters = parseInt(document.getElementById('opt-iters').value) || 10;
+
+  const btn = document.getElementById('opt-run-btn');
+  btn.disabled = true;
+  btn.textContent = `⏳ Running ${algo.toUpperCase()} Optimization...`;
+  setStatus('active', `Running ${algo.toUpperCase()} metaheuristic optimization…`);
+
+  try {
+    const res = await fetch(`${API_BASE}/optimize`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        code: code,
+        algorithm: algo,
+        objective: obj,
+        iterations: iters,
+        particles_or_pop: pop
+      })
+    });
+    const data = await res.json();
+    if (data.status === 'ok' && data.optimization) {
+      renderOptimizationResults(data.optimization);
+      setStatus('done', `Optimization finished: best fitness ${data.optimization.best_fitness}`);
+    } else {
+      alert('Optimization error: ' + (data.error || 'Unknown failure'));
+      setStatus('error', 'Optimization failed');
+    }
+  } catch(e) {
+    console.error(e);
+    alert('Optimization request failed: ' + e.message);
+    setStatus('error', 'Optimization failed');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '🚀 Run Metaheuristic Optimization';
+  }
+}
+
+function renderOptimizationResults(opt) {
+  const card = document.getElementById('opt-results-card');
+  card.style.display = 'flex';
+
+  const title = document.getElementById('opt-result-title');
+  title.textContent = `${opt.algorithm_name || 'Metaheuristic'} Recommended Solution (Fitness: ${opt.best_fitness})`;
+
+  const bp = opt.best_params || {};
+  const deltas = opt.baseline_vs_optimized || {};
+  const bm = opt.best_metrics || {};
+  const base = opt.baseline_metrics || {};
+
+  // Render Deltas Grid
+  const deltasGrid = document.getElementById('opt-deltas-grid');
+  deltasGrid.innerHTML = `
+    <div class="p-3 bg-surface-container-lowest/80 rounded border border-outline-variant/20">
+      <div class="text-[10px] font-label-caps text-outline uppercase">Area Reduction</div>
+      <div class="text-base font-bold text-secondary-container mt-1">${deltas.area_reduction_pct > 0 ? '-' : '+'}${Math.abs(deltas.area_reduction_pct)}%</div>
+      <div class="text-[10px] text-outline">${base.total_area_um2} → ${bm.total_area_um2} μm²</div>
+    </div>
+    <div class="p-3 bg-surface-container-lowest/80 rounded border border-outline-variant/20">
+      <div class="text-[10px] font-label-caps text-outline uppercase">Power Reduction</div>
+      <div class="text-base font-bold text-secondary-container mt-1">${deltas.power_reduction_pct > 0 ? '-' : '+'}${Math.abs(deltas.power_reduction_pct)}%</div>
+      <div class="text-[10px] text-outline">${base.total_power_uw} → ${bm.total_power_uw} μW</div>
+    </div>
+    <div class="p-3 bg-surface-container-lowest/80 rounded border border-outline-variant/20">
+      <div class="text-[10px] font-label-caps text-outline uppercase">Delay Reduction</div>
+      <div class="text-base font-bold text-secondary-container mt-1">${deltas.delay_reduction_pct > 0 ? '-' : '+'}${Math.abs(deltas.delay_reduction_pct)}%</div>
+      <div class="text-[10px] text-outline">${base.critical_path_ps} → ${bm.critical_path_ps} ps</div>
+    </div>
+    <div class="p-3 bg-surface-container-lowest/80 rounded border border-outline-variant/20">
+      <div class="text-[10px] font-label-caps text-outline uppercase">Quality Gain</div>
+      <div class="text-base font-bold text-primary mt-1">${deltas.quality_gain_pts >= 0 ? '+' : ''}${deltas.quality_gain_pts} pts</div>
+      <div class="text-[10px] text-outline">${base.quality_score} → ${bm.quality_score} / 100</div>
+    </div>
+  `;
+
+  // Render Parameters Table
+  const paramRoles = {
+    'abc_strategy': 'ABC Logic synthesis optimization script (fast, dff, all, simple)',
+    'target_clock_period_ns': 'Clock period constraint used for logic delay optimization',
+    'flatten': 'Hierarchy flattening during synthesis pass',
+    'resource_sharing': 'Resource sharing of arithmetic operator units',
+    'fsm_encoding': 'Finite state machine encoding style (onehot, binary, gray, auto)'
+  };
+  const pBody = document.getElementById('opt-params-body');
+  pBody.innerHTML = Object.entries(bp).map(([k, v]) => `
+    <tr>
+      <td class="font-code-sm text-secondary-container font-semibold">${k}</td>
+      <td class="font-code-sm text-primary font-bold">${v}</td>
+      <td class="text-xs text-outline">${paramRoles[k] || ''}</td>
+    </tr>
+  `).join('');
+
+  // Convergence text
+  const hist = opt.convergence_history || [];
+  const convSpan = document.getElementById('opt-conv-text');
+  if (hist.length > 0) {
+    convSpan.textContent = `Initial loss: ${hist[0]} → Best loss: ${opt.best_fitness} (${hist.length} evaluation points)`;
+  }
+}
 </script>
 </body>
 </html>
