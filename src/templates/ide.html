@@ -316,6 +316,7 @@
     <button class="tab-btn px-4 py-2.5 font-label-caps text-xs text-on-surface-variant hover:text-primary transition-colors whitespace-nowrap" onclick="switchTab('t-metrics')">📊 Complexity</button>
     <button class="tab-btn px-4 py-2.5 font-label-caps text-xs text-on-surface-variant hover:text-primary transition-colors whitespace-nowrap" onclick="switchTab('t-tb')">🧪 Testbench & Sim</button>
     <button class="tab-btn px-4 py-2.5 font-label-caps text-xs text-on-surface-variant hover:text-primary transition-colors whitespace-nowrap" onclick="switchTab('t-compare')">⚖️ Comparison</button>
+    <button class="tab-btn px-4 py-2.5 font-label-caps text-xs text-on-surface-variant hover:text-primary transition-colors whitespace-nowrap" onclick="switchTab('t-opt')">🎯 Metaheuristics</button>
     <button class="tab-btn px-4 py-2.5 font-label-caps text-xs text-on-surface-variant hover:text-primary transition-colors whitespace-nowrap" onclick="switchTab('t-report')">📄 Report</button>
   </div>
 
@@ -480,6 +481,74 @@
         </div>
       </div>
       <pre id="report-text-box" class="code-block text-xs flex-1 max-h-80">// Report output</pre>
+    </div>
+
+    <!-- TAB 9: METAHEURISTIC OPTIMIZATION -->
+    <div id="t-opt" class="tab-pane">
+      <div class="bg-surface-container-high/40 p-4 rounded border border-outline-variant/20 flex flex-col gap-4">
+        <div>
+          <h4 class="text-xs font-bold text-primary uppercase tracking-wider">Design Space Synthesis Optimization</h4>
+          <p class="text-xs text-outline mt-0.5">Explore Yosys synthesis parameter trade-offs using Particle Swarm (PSO), Genetic Algorithm (GA), or Simulated Annealing (SA).</p>
+        </div>
+
+        <!-- Controls Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-4 gap-3">
+          <div>
+            <label class="text-[10px] font-label-caps uppercase text-outline">Algorithm</label>
+            <select id="opt-algo" class="w-full bg-surface-container-highest border border-outline-variant/30 rounded px-2.5 py-1.5 text-xs text-on-surface mt-1 focus:border-primary">
+              <option value="pso">Particle Swarm Optimization (PSO)</option>
+              <option value="ga">Genetic Algorithm (GA)</option>
+              <option value="sa">Simulated Annealing (SA)</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-[10px] font-label-caps uppercase text-outline">Target Objective</label>
+            <select id="opt-obj" class="w-full bg-surface-container-highest border border-outline-variant/30 rounded px-2.5 py-1.5 text-xs text-on-surface mt-1 focus:border-primary">
+              <option value="balanced">Balanced (Area + Power + Timing)</option>
+              <option value="area">Area Minimization</option>
+              <option value="power">Power Minimization</option>
+              <option value="timing">Timing / Delay Minimization</option>
+            </select>
+          </div>
+          <div>
+            <label class="text-[10px] font-label-caps uppercase text-outline">Population / Particles</label>
+            <input type="number" id="opt-pop" class="w-full bg-surface-container-highest border border-outline-variant/30 rounded px-2.5 py-1.5 text-xs text-on-surface mt-1 focus:border-primary" value="8" min="3" max="24">
+          </div>
+          <div>
+            <label class="text-[10px] font-label-caps uppercase text-outline">Iterations / Generations</label>
+            <input type="number" id="opt-iters" class="w-full bg-surface-container-highest border border-outline-variant/30 rounded px-2.5 py-1.5 text-xs text-on-surface mt-1 focus:border-primary" value="10" min="3" max="30">
+          </div>
+        </div>
+
+        <div>
+          <button id="opt-run-btn" class="bg-primary hover:bg-primary-hover text-surface-container-lowest font-bold text-xs px-4 py-2 rounded transition-all flex items-center gap-2" onclick="runOptimization()">
+            🚀 Run Metaheuristic Optimization
+          </button>
+        </div>
+      </div>
+
+      <!-- Results Card (hidden initially) -->
+      <div id="opt-results-card" class="bg-surface-container-high/40 p-4 rounded border border-outline-variant/20 flex flex-col gap-4" style="display:none;">
+        <h4 class="text-xs font-bold text-primary uppercase tracking-wider" id="opt-result-title">Optimal Parameter Recommendation</h4>
+
+        <!-- Metrics Delta Grid -->
+        <div class="grid grid-cols-2 md:grid-cols-4 gap-3" id="opt-deltas-grid"></div>
+
+        <!-- Recommended Parameters Table -->
+        <div>
+          <h5 class="text-[11px] font-bold text-on-surface uppercase mb-1">Recommended Yosys Synthesis Settings</h5>
+          <table class="data-table">
+            <thead><tr><th>Parameter</th><th>Optimal Value</th><th>Optimization Role</th></tr></thead>
+            <tbody id="opt-params-body"></tbody>
+          </table>
+        </div>
+
+        <!-- Convergence Summary -->
+        <div class="p-3 bg-surface-container-lowest/80 rounded border border-outline-variant/20">
+          <span class="text-xs font-bold text-tertiary">Convergence Trajectory:</span>
+          <span id="opt-conv-text" class="text-xs font-code-sm text-outline ml-2"></span>
+        </div>
+      </div>
     </div>
 
   </div>
