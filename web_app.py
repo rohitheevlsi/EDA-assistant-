@@ -246,7 +246,7 @@ st.markdown("""
 # ── Sidebar Configuration ──────────────────────────────────────────────────
 with st.sidebar:
     st.markdown('<div class="sidebar-section">Analysis Mode</div>', unsafe_allow_html=True)
-    mode = st.radio("", ["Single Design Analysis", "Design Comparison"], label_visibility="collapsed")
+    mode = st.radio("Analysis Mode", ["Single Design Analysis", "Design Comparison"], label_visibility="collapsed")
 
     st.markdown('<div class="sidebar-section">Pipeline Stages</div>', unsafe_allow_html=True)
     use_llm = st.toggle("🧠 Gemini Explanation", value=True)
@@ -277,7 +277,7 @@ with st.sidebar:
         opt_target = st.selectbox("Optimization Target", ["balanced", "area", "power", "timing"])
 
     st.markdown('<div class="sidebar-section">Source Input</div>', unsafe_allow_html=True)
-    input_mode = st.radio("", ["Upload file", "Select sample"], label_visibility="collapsed")
+    input_mode = st.radio("Source Input", ["Upload file", "Select sample"], label_visibility="collapsed")
 
     sample_files = [
         "alu_8bit.v",
